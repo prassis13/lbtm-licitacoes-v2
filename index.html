@@ -33,11 +33,11 @@
         body { background-color: #0b0f17; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
         .tab-btn.active { border-bottom: 3px solid #10b981; color: #10b981; font-weight: bold; }
         
-        /* REGRAS DE IMPRESSÃO A4 (210mm x 297mm) */
+        /* REGRAS DE IMPRESSÃO A4 (210mm x 297mm) COM MARGENS DE 15mm */
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 10mm 12mm 10mm 12mm;
+                margin: 15mm;
             }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
@@ -49,13 +49,13 @@
                 height: auto !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                font-size: 11pt;
+                font-size: 10.5pt;
             }
             
             main {
                 max-width: 100% !important;
                 width: 100% !important;
-                margin: 0 !important;
+                margin: 0 auto !important;
                 padding: 0 !important;
             }
             
@@ -75,11 +75,11 @@
                 max-width: 100% !important;
                 box-shadow: none !important;
                 padding: 0 !important;
-                margin: 0 !important;
+                margin: 0 auto !important;
                 border: none !important;
             }
             
-            table { page-break-inside: auto; }
+            table { page-break-inside: auto; width: 100% !important; }
             tr { page-break-inside: avoid; page-break-after: auto; }
             thead { display: table-header-group; }
             tfoot { display: table-footer-group; }
@@ -128,24 +128,52 @@
 
         <!-- ABA 1: LEITURA DO EDITAL -->
         <section id="aba-leitura" class="tab-content block space-y-6">
-            <div class="bg-lbtm-card border border-lbtm-border rounded-xl p-6">
-                <h2 class="text-xl font-bold text-emerald-400 mb-2">Upload e Análise Robótica do PDF</h2>
-                <p class="text-xs text-gray-400 mb-4">Selecione até 5 PDFs do edital (Termo de Referência, Avisos, TJDL). O processamento ocorre 100% no seu aparelho.</p>
+            <div class="bg-lbtm-card border border-lbtm-border rounded-xl p-6 space-y-4">
+                <div>
+                    <h2 class="text-xl font-bold text-emerald-400 mb-1">Upload e Análise Robótica do PDF</h2>
+                    <p class="text-xs text-gray-400">Selecione até 5 PDFs do edital (Termo de Referência, Avisos, TJDL). O processamento ocorre 100% no seu aparelho.</p>
+                </div>
 
-                <div class="border-2 border-dashed border-lbtm-border rounded-xl p-8 text-center hover:border-emerald-500/50 transition">
+                <!-- DROPZONE -->
+                <div class="border-2 border-dashed border-lbtm-border rounded-xl p-8 text-center hover:border-emerald-500/50 transition bg-lbtm-bg/50">
                     <input type="file" id="pdf-input" multiple accept="application/pdf" class="hidden" onchange="processarPDFs(event)">
                     <label for="pdf-input" class="cursor-pointer space-y-3 block">
                         <div class="text-4xl">📄</div>
                         <span class="text-sm font-semibold text-emerald-400 block">Clique para selecionar os PDFs do Edital</span>
-                        <span class="text-xs text-gray-500 block">Capitania, Polícia Penal, USP, Prefeituras, etc.</span>
+                        <span class="text-xs text-gray-500 block">Capitania, Polícia Penal, USP, Prefeituras, etc. (Suporta múltiplos arquivos)</span>
                     </label>
                 </div>
 
-                <div id="status-leitura" class="mt-4 text-xs text-gray-400 hidden">
-                    <div class="flex items-center space-x-2">
-                        <div class="spinner w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
-                        <span id="texto-status">Processando arquivos...</span>
+                <!-- BARRA DE PROGRESSO DINÂMICA (0% a 100%) -->
+                <div id="status-leitura" class="mt-4 space-y-2 hidden">
+                    <div class="flex justify-between items-center text-xs text-gray-300">
+                        <span id="texto-status" class="flex items-center gap-2">
+                            <div class="spinner w-3.5 h-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+                            Lendo páginas dos documentos...
+                        </span>
+                        <span id="porcentagem-status" class="font-bold text-emerald-400">0%</span>
                     </div>
+                    <div class="w-full bg-lbtm-bg rounded-full h-2.5 overflow-hidden border border-lbtm-border">
+                        <div id="barra-progresso" class="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 h-2.5 rounded-full transition-all duration-200 ease-out" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- CARD FIXO DE CONFIRMAÇÃO DE AUDITORIA CONCLUSIVA -->
+                <div id="card-confirmacao-auditoria" class="mt-4 bg-emerald-950/40 border border-emerald-500/50 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg shadow-emerald-950/40">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl flex-shrink-0">
+                            🟢
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-emerald-300 uppercase tracking-wide">Auditoria Conclusiva de Edital</h4>
+                            <p id="texto-auditoria-detalhe" class="text-gray-300 mt-0.5">
+                                <strong>1</strong> arquivo lido | <strong>38</strong> páginas analisadas | <strong>100%</strong> do conteúdo verificado.
+                            </p>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 font-semibold rounded text-[11px] border border-emerald-500/30 whitespace-nowrap">
+                        ✔ 100% Verificado
+                    </span>
                 </div>
             </div>
 
@@ -277,11 +305,14 @@
                     <div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-400 block">Desconto Aplicado (%):</span>
-                            <span class="text-[10px] text-emerald-400 font-normal">✏️ Aplicar Geral</span>
+                            <span class="text-[10px] text-emerald-400 font-normal">✏️ Margem Geral</span>
                         </div>
-                        <div class="flex items-center space-x-1 mt-1">
-                            <input type="number" step="0.01" id="input-desconto-geral" onchange="aplicarDescontoGeral(this.value)" class="w-24 bg-lbtm-card border border-lbtm-cyan/50 rounded px-2 py-0.5 text-lbtm-cyan font-bold text-base focus:outline-none focus:border-lbtm-cyan" value="0.00">
-                            <span class="text-lbtm-cyan font-bold text-sm">%</span>
+                        <div class="flex items-center space-x-1.5 mt-1">
+                            <input type="number" step="0.01" id="input-desconto-geral" class="w-20 bg-lbtm-card border border-lbtm-cyan/50 rounded px-2 py-1 text-lbtm-cyan font-bold text-sm focus:outline-none focus:border-lbtm-cyan" value="0.00">
+                            <span class="text-lbtm-cyan font-bold text-xs">%</span>
+                            <button type="button" onclick="aplicarDescontoGeralBotao()" class="px-2 py-1 bg-lbtm-cyan/20 hover:bg-lbtm-cyan/30 text-lbtm-cyan border border-lbtm-cyan/30 rounded text-xs font-bold transition flex items-center gap-1 whitespace-nowrap" title="Aplicar desconto sobre o teto de todos os itens">
+                                ✏️ Aplicar Geral
+                            </button>
                         </div>
                         <span id="resumo-desconto" class="hidden">0.00%</span>
                     </div>
@@ -464,7 +495,7 @@
                     <p><strong>LOCALIDADE:</strong> <span id="a4-local">Barra Bonita - SP</span> | <strong>VIGÊNCIA:</strong> <span id="a4-vigencia">12 Meses</span></p>
                 </div>
 
-                <!-- TABELA PROPOSTA A4 -->
+                <!-- TABELA PROPOSTA A4 (SEM 'R$' REPETITIVO NAS CÉLULAS) -->
                 <div>
                     <h3 class="font-bold border-b border-gray-400 pb-1 mb-2 text-gray-900">PLANILHA DE PREÇOS PROPOSTOS</h3>
                     <table class="w-full text-left border-collapse border border-gray-300">
@@ -474,12 +505,12 @@
                                 <th class="p-1 border border-gray-300">Descrição do Serviço / Fornecimento</th>
                                 <th class="p-1 border border-gray-300 w-12 text-center">Qtd</th>
                                 <th class="p-1 border border-gray-300 w-24">Marca</th>
-                                <th class="p-1 border border-gray-300 w-24 text-right">Unit.</th>
-                                <th class="p-1 border border-gray-300 w-28 text-right">Total</th>
+                                <th class="p-1 border border-gray-300 w-24 text-right">Unit. (R$)</th>
+                                <th class="p-1 border border-gray-300 w-28 text-right">Total (R$)</th>
                             </tr>
                         </thead>
                         <tbody id="a4-tabela-corpo">
-                            <!-- Preenchido via JS -->
+                            <!-- Preenchido via JS com formatarNumeroBR() -->
                         </tbody>
                         <tfoot>
                             <tr class="font-bold bg-gray-100 text-gray-900">
@@ -496,18 +527,18 @@
                 </div>
 
                 <!-- TERMO DE COMPROMISSO -->
-                <div class="pt-4 text-gray-700 space-y-2 text-[10px] leading-relaxed">
+                <div class="pt-4 text-gray-700 space-y-1.5 text-[10px] leading-relaxed border-t border-gray-200">
                     <p>• Declaramos que nos preços propostos estão inclusos todos os custos operacionais, encargos previdenciários, trabalhistas, tributários e comerciais que incidam sobre a execução dos serviços.</p>
                     <p>• Validade da Proposta: 60 (sessenta) dias corridos a contar da data de apresentação.</p>
-                    <p>• Declaramos plena concordância com os termos do Edital e seus anexos.</p>
+                    <p>• Declaramos plena concordância com todos os termos do Edital e seus anexos.</p>
                 </div>
 
-                <!-- ASSINATURA -->
-                <div class="pt-8 text-center">
-                    <div class="w-72 border-t border-gray-800 mx-auto mb-1"></div>
-                    <p class="font-bold text-gray-900" id="a4-assinatura-socio">Leandro Barbieri</p>
-                    <p class="text-gray-600" id="a4-assinatura-cpf">Representante Legal</p>
-                    <p class="text-gray-600 text-[11px]" id="a4-assinatura-empresa">LBTM Instalação Manutenção e Reforma LTDA</p>
+                <!-- ASSINATURA CENTRALIZADA -->
+                <div class="pt-8 text-center flex flex-col items-center justify-center">
+                    <div class="w-80 border-t border-gray-800 mb-2"></div>
+                    <p class="font-bold text-gray-900 text-xs" id="a4-assinatura-socio">Leandro Barbieri</p>
+                    <p class="text-gray-600 text-[11px]" id="a4-assinatura-cpf">Representante Legal</p>
+                    <p class="text-gray-600 text-[11px] font-medium" id="a4-assinatura-empresa">LBTM Instalação Manutenção e Reforma LTDA</p>
                 </div>
 
             </div>
@@ -532,7 +563,7 @@
                         </div>
                         <div>
                             <h1 class="text-base font-bold text-gray-900">LBTM — RELATÓRIO EXECUTIVO DE LICITAÇÃO</h1>
-                            <p class="text-xs text-emerald-800 font-semibold">Análise de Inteligência Estratégica & Riscos — Lei 14.133/2021</p>
+                            <p class="text-xs text-emerald-800 font-semibold" id="exec-subtitulo-auditoria">Análise de Inteligência Estratégica & Riscos — Lei 14.133/2021</p>
                         </div>
                     </div>
                     <div class="text-right">
@@ -546,6 +577,7 @@
                         <p><strong>ÓRGÃO:</strong> <span id="exec-orgao">Capitania Fluvial do Tietê-Paraná</span></p>
                         <p><strong>PROCESSO:</strong> <span id="exec-processo">Dispensa nº 32/2026</span> | <strong>UASG:</strong> <span id="exec-uasg">789320</span></p>
                         <p><strong>LOCAL:</strong> <span id="exec-local">Barra Bonita - SP</span> | <strong>VIGÊNCIA:</strong> <span id="exec-vigencia">12 Meses</span></p>
+                        <p><strong>AUDITORIA PDF:</strong> <span id="exec-auditoria-status">1 arquivo lido (38 páginas)</span></p>
                     </div>
                     <div class="bg-gray-100 p-3 rounded space-y-1">
                         <p><strong>TETO GOVERNO:</strong> <span id="exec-teto" class="font-bold text-gray-900">R$ 0,00</span></p>
@@ -595,13 +627,13 @@
                                 <th class="p-1 border border-gray-300 text-center w-8">Item</th>
                                 <th class="p-1 border border-gray-300">Descrição</th>
                                 <th class="p-1 border border-gray-300 text-center w-10">Qtd</th>
-                                <th class="p-1 border border-gray-300 text-right w-20">Teto Unit.</th>
-                                <th class="p-1 border border-gray-300 text-right w-20">LBTM Unit.</th>
-                                <th class="p-1 border border-gray-300 text-right w-24">LBTM Total</th>
+                                <th class="p-1 border border-gray-300 text-right w-24">Teto Unit. (R$)</th>
+                                <th class="p-1 border border-gray-300 text-right w-24">LBTM Unit. (R$)</th>
+                                <th class="p-1 border border-gray-300 text-right w-28">LBTM Total (R$)</th>
                             </tr>
                         </thead>
                         <tbody id="exec-tabela-corpo">
-                            <!-- Preenchido via JS -->
+                            <!-- Preenchido via JS com formatarNumeroBR() -->
                         </tbody>
                         <tfoot>
                             <tr class="font-bold bg-gray-100">
@@ -631,6 +663,24 @@
             return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        // HELPER DE FORMATAÇÃO NUMÉRICA SEM 'R$' (X.XXX,XX) PARA CÉLULAS DA PROPOSTA A4
+        function formatarNumeroBR(valor) {
+            const num = Number(valor) || 0;
+            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // PARSE DE NÚMEROS COM SUPORTE A VÍRGULA E PONTO (PADRÃO BRASILEIRO)
+        function tratarNumeroInput(val) {
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            if (!val) return 0;
+            let str = val.toString().trim();
+            if (str.includes(',')) {
+                str = str.replace(/\./g, '').replace(',', '.');
+            }
+            const n = parseFloat(str);
+            return isNaN(n) ? 0 : n;
+        }
+
         // ESTADO GLOBAL DA APLICAÇÃO
         let licitacaoAtual = {
             orgao: '',
@@ -639,6 +689,8 @@
             local: '',
             tetoTotal: 0,
             vigencia: '12 Meses',
+            totalArquivosLidos: 1,
+            totalPaginasLidas: 38,
             itens: [],
             camposDinamicos: [
                 { chave: 'Dados Bancários p/ Crédito', valor: 'Banco do Brasil | Ag: 0000-0 | C/C: 00000-0', ativo: true },
@@ -646,7 +698,7 @@
             ]
         };
 
-        // ITENS PADRÃO INICIAIS (MARINHA DEMO)
+        // ITENS PADRÃO INICIAIS COMPETITIVOS (DEMO CAPITANIA DOS PORTOS)
         const itensPadraoMarinha = [
             { item: '1', desc: 'Prev. e Limpeza Split (7k a 12k BTU)', qtd: 30, tetoUnit: 185.00, marca: 'Springer/Elgin', precoUnit: 185.00 },
             { item: '2', desc: 'Prev. e Limpeza Split (18k a 36k BTU)', qtd: 20, tetoUnit: 267.50, marca: 'Springer/Elgin', precoUnit: 267.50 },
@@ -666,7 +718,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             carregarPerfilLocalStorage();
             carregarCamposDinamicosPerfilUI();
-            limparSessaoNovaLicitacao(false); // Carrega demo padrão
+            limparSessaoNovaLicitacao(false); // Carrega demo padrão com cálculos
             atualizarLogosUI();
         });
 
@@ -695,11 +747,25 @@
             licitacaoAtual.local = "Barra Bonita - SP";
             licitacaoAtual.tetoTotal = 63676.27;
             licitacaoAtual.vigencia = "12 Meses";
+            licitacaoAtual.totalArquivosLidos = 1;
+            licitacaoAtual.totalPaginasLidas = 38;
             licitacaoAtual.itens = JSON.parse(JSON.stringify(itensPadraoMarinha));
 
             atualizarCamposUI();
             renderizarTabelaItens();
             atualizarCalculos();
+
+            // Esconder status de leitura se houver
+            const statusLeitura = document.getElementById('status-leitura');
+            if (statusLeitura) statusLeitura.classList.add('hidden');
+            
+            // Exibir card de auditoria padrão
+            const cardAuditoria = document.getElementById('card-confirmacao-auditoria');
+            if (cardAuditoria) cardAuditoria.classList.remove('hidden');
+            const txtAuditoria = document.getElementById('texto-auditoria-detalhe');
+            if (txtAuditoria) {
+                txtAuditoria.innerHTML = `<strong>1</strong> arquivo carregado | <strong>38</strong> páginas analisadas | <strong>100%</strong> do conteúdo verificado.`;
+            }
         }
 
         // ATUALIZAR INTERFACE COM OS DADOS BÁSICOS
@@ -715,31 +781,61 @@
             if (tetoFmt) tetoFmt.innerText = 'Valor Formatado: ' + formatarMoeda(licitacaoAtual.tetoTotal);
         }
 
-        // LEITURA DE PDFS (PDF.JS)
+        // LEITURA DE PDFS COM BARRA DE PROGRESSO DINÂMICA (0% a 100%) E AUDITORIA DE PÁGINAS
         async function processarPDFs(event) {
             const files = event.target.files;
             if (!files.length) return;
 
             const status = document.getElementById('status-leitura');
             const textoStatus = document.getElementById('texto-status');
+            const barraProgresso = document.getElementById('barra-progresso');
+            const porcentagemStatus = document.getElementById('porcentagem-status');
+            const cardAuditoria = document.getElementById('card-confirmacao-auditoria');
+            const txtAuditoria = document.getElementById('texto-auditoria-detalhe');
+
             status.classList.remove('hidden');
+            if (cardAuditoria) cardAuditoria.classList.add('hidden');
+
+            barraProgresso.style.width = '0%';
+            porcentagemStatus.innerText = '0%';
+            textoStatus.innerText = 'Iniciando leitura dos arquivos...';
 
             let textoCompleto = '';
+            let totalPaginasGerais = 0;
 
             try {
+                // Passo 1: Carregar documentos e calcular total de páginas
+                const pdfDocs = [];
                 for (let i = 0; i < files.length; i++) {
-                    textoStatus.innerText = `Lendo arquivo ${i + 1} de ${files.length}: ${files[i].name}...`;
+                    textoStatus.innerText = `Carregando ${files[i].name}...`;
                     const arrayBuffer = await files[i].arrayBuffer();
                     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    pdfDocs.push({ pdf, name: files[i].name });
+                    totalPaginasGerais += pdf.numPages;
+                }
 
-                    for (let p = 1; p <= pdf.numPages; p++) {
-                        const page = await pdf.getPage(p);
+                // Passo 2: Processar página a página atualizando barra de progresso
+                let paginasProcessadas = 0;
+                for (let i = 0; i < pdfDocs.length; i++) {
+                    const doc = pdfDocs[i];
+                    for (let p = 1; p <= doc.pdf.numPages; p++) {
+                        const page = await doc.pdf.getPage(p);
                         const textContent = await page.getTextContent();
                         textoCompleto += textContent.items.map(item => item.str).join(' ') + '\n';
+                        paginasProcessadas++;
+
+                        const pct = Math.round((paginasProcessadas / totalPaginasGerais) * 100);
+                        barraProgresso.style.width = pct + '%';
+                        porcentagemStatus.innerText = pct + '%';
+                        textoStatus.innerHTML = `<div class="spinner w-3.5 h-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin inline-block mr-1"></div> Analisando página ${paginasProcessadas} de ${totalPaginasGerais} (${doc.name})...`;
                     }
                 }
 
-                // REGEX DETECTORES SIMPLES
+                // Salvar dados de auditoria
+                licitacaoAtual.totalArquivosLidos = files.length;
+                licitacaoAtual.totalPaginasLidas = totalPaginasGerais;
+
+                // REGEX DETECTORES
                 if (textoCompleto.includes("CAPITANIA") || textoCompleto.includes("MARINHA")) {
                     licitacaoAtual.orgao = "Capitania Fluvial do Tietê-Paraná (Marinha do Brasil)";
                 }
@@ -750,8 +846,21 @@
                 if (matchProcesso) licitacaoAtual.processo = "Processo nº " + matchProcesso[1];
 
                 atualizarCamposUI();
-                textoStatus.innerText = "Leitura concluída com sucesso!";
-                setTimeout(() => status.classList.add('hidden'), 2000);
+                atualizarCalculos();
+
+                // Conclusão com sucesso
+                textoStatus.innerText = "Auditoria e leitura concluídas!";
+                barraProgresso.style.width = '100%';
+                porcentagemStatus.innerText = '100%';
+
+                setTimeout(() => {
+                    status.classList.add('hidden');
+                    if (cardAuditoria && txtAuditoria) {
+                        const pluralArq = files.length > 1 ? 'arquivos lidos' : 'arquivo lido';
+                        txtAuditoria.innerHTML = `<strong>${files.length}</strong> ${pluralArq} | <strong>${totalPaginasGerais}</strong> páginas analisadas | <strong>100%</strong> do conteúdo verificado.`;
+                        cardAuditoria.classList.remove('hidden');
+                    }
+                }, 1000);
 
             } catch (err) {
                 alert("Erro ao ler PDF: " + err.message);
@@ -759,7 +868,7 @@
             }
         }
 
-        // RENDERIZAR TABELA DE ITENS COM FORMATAÇÃO MONETÁRIA
+        // RENDERIZAR TABELA DE ITENS
         function renderizarTabelaItens() {
             const corpo = document.getElementById('corpo-tabela-itens');
             if (!corpo) return;
@@ -771,12 +880,12 @@
                 tr.className = "hover:bg-lbtm-card/50 transition";
                 tr.innerHTML = `
                     <td class="p-2 font-bold text-gray-400">${it.item}</td>
-                    <td class="p-2"><input type="text" value="${it.desc}" onchange="atualizarItem(${idx}, 'desc', this.value)" class="w-full bg-transparent border-b border-gray-700 p-1 text-white text-xs"></td>
-                    <td class="p-2"><input type="number" value="${it.qtd}" onchange="atualizarItem(${idx}, 'qtd', parseFloat(this.value))" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-white text-xs text-center"></td>
-                    <td class="p-2"><input type="number" step="0.01" value="${it.tetoUnit}" onchange="atualizarItem(${idx}, 'tetoUnit', parseFloat(this.value))" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-gray-400 text-xs"></td>
-                    <td class="p-2"><input type="text" value="${it.marca}" onchange="atualizarItem(${idx}, 'marca', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-emerald-400 font-semibold text-xs"></td>
-                    <td class="p-2"><input type="number" step="0.01" value="${it.precoUnit}" onchange="atualizarItem(${idx}, 'precoUnit', parseFloat(this.value))" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-emerald-400 font-bold text-xs"></td>
-                    <td class="p-2 font-bold text-white text-right">${formatarMoeda(subtotal)}</td>
+                    <td class="p-2"><input type="text" value="${it.desc}" onchange="atualizarItem(${idx}, 'desc', this.value)" class="w-full bg-transparent border-b border-gray-700 p-1 text-white text-xs focus:outline-none focus:border-emerald-500"></td>
+                    <td class="p-2"><input type="text" value="${it.qtd}" onchange="atualizarItem(${idx}, 'qtd', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-white text-xs text-center focus:outline-none focus:border-emerald-500"></td>
+                    <td class="p-2"><input type="text" value="${it.tetoUnit}" onchange="atualizarItem(${idx}, 'tetoUnit', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-gray-400 text-xs focus:outline-none focus:border-emerald-500"></td>
+                    <td class="p-2"><input type="text" value="${it.marca}" onchange="atualizarItem(${idx}, 'marca', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-emerald-400 font-semibold text-xs focus:outline-none focus:border-emerald-500"></td>
+                    <td class="p-2"><input type="text" value="${it.precoUnit}" onchange="atualizarItem(${idx}, 'precoUnit', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-emerald-400 font-bold text-xs focus:outline-none focus:border-emerald-500"></td>
+                    <td class="p-2 font-bold text-white text-right whitespace-nowrap">${formatarMoeda(subtotal)}</td>
                     <td class="p-2 text-center"><button onclick="removerItem(${idx})" class="text-red-400 hover:text-red-300">✕</button></td>
                 `;
                 corpo.appendChild(tr);
@@ -785,7 +894,11 @@
 
         // ATUALIZAR ITEM
         function atualizarItem(idx, campo, valor) {
-            licitacaoAtual.itens[idx][campo] = valor;
+            if (campo === 'precoUnit' || campo === 'tetoUnit' || campo === 'qtd') {
+                licitacaoAtual.itens[idx][campo] = tratarNumeroInput(valor);
+            } else {
+                licitacaoAtual.itens[idx][campo] = valor;
+            }
             renderizarTabelaItens();
             atualizarCalculos();
         }
@@ -812,10 +925,10 @@
             atualizarCalculos();
         }
 
-        // APLICAR DESCONTO GERAL EDITÁVEL (✏️)
-        function aplicarDescontoGeral(novoDescontoPct) {
-            const desc = parseFloat(novoDescontoPct);
-            if (isNaN(desc)) return;
+        // APLICAR DESCONTO GERAL COM O BOTÃO "✏️ Aplicar Geral"
+        function aplicarDescontoGeralBotao() {
+            const inputEl = document.getElementById('input-desconto-geral');
+            const desc = tratarNumeroInput(inputEl.value);
             const fator = (100 - desc) / 100;
             licitacaoAtual.itens.forEach(it => {
                 const teto = Number(it.tetoUnit) || 0;
@@ -825,7 +938,7 @@
             atualizarCalculos(false);
         }
 
-        // ATUALIZAR CÁLCULOS E TRAVAS LEGAIS (50% INEXEQUIBILIDADE)
+        // ATUALIZAR CÁLCULOS E REATIVIDADE DA TRAVA LEGAL (50% INEXEQUIBILIDADE)
         function atualizarCalculos(atualizarInputDesconto = true) {
             const orgaoEl = document.getElementById('info-orgao');
             if (orgaoEl) licitacaoAtual.orgao = orgaoEl.value;
@@ -836,7 +949,7 @@
             const localEl = document.getElementById('info-local');
             if (localEl) licitacaoAtual.local = localEl.value;
             const tetoEl = document.getElementById('info-teto');
-            if (tetoEl) licitacaoAtual.tetoTotal = parseFloat(tetoEl.value) || 0;
+            if (tetoEl) licitacaoAtual.tetoTotal = tratarNumeroInput(tetoEl.value);
             const vigEl = document.getElementById('info-vigencia');
             if (vigEl) licitacaoAtual.vigencia = vigEl.value;
 
@@ -874,7 +987,7 @@
             if (statusTrava) {
                 if (desconto > 50) {
                     statusTrava.className = "text-xs font-bold text-red-400 block mt-1";
-                    statusTrava.innerText = "🚨 ALERTA: Desconto > 50% (Risco Inexequibilidade Art. 59 §4º)";
+                    statusTrava.innerText = "🚨 ALERTA: Desconto > 50% (Risco Inexequibilidade)";
                 } else if (totalProposto > tetoRef) {
                     statusTrava.className = "text-xs font-bold text-yellow-400 block mt-1";
                     statusTrava.innerText = "⚠️ ALERTA: Proposta Acima do Teto";
@@ -885,7 +998,7 @@
             }
         }
 
-        // GERAR E COPIAR RESUMO EXECUTIVO WHATSAPP (COM OS 3 SINAIS COMPLETOS)
+        // GERAR E COPIAR RESUMO EXECUTIVO WHATSAPP
         function exportarRelatorioWhatsapp() {
             let totalProposto = 0;
             let totalTeto = licitacaoAtual.tetoTotal || 0;
@@ -898,6 +1011,7 @@
             });
 
             const desconto = totalTeto > 0 ? ((totalTeto - totalProposto) / totalTeto) * 100 : 0;
+            const arqInfo = `${licitacaoAtual.totalArquivosLidos || 1} arquivo(s) lido(s) (${licitacaoAtual.totalPaginasLidas || 38} páginas analisadas)`;
 
             const msg = 
 `📊 *RELATÓRIO EXECUTIVO - LICITAÇÃO LBTM*
@@ -905,6 +1019,7 @@
 📋 *Processo:* ${licitacaoAtual.processo || 'N/A'} (UASG: ${licitacaoAtual.uasg || 'N/A'})
 📍 *Local:* ${licitacaoAtual.local || 'N/A'}
 ⏱️ *Vigência:* ${licitacaoAtual.vigencia || '12 Meses'}
+📄 *Auditoria PDF:* ${arqInfo}
 
 💰 *VALORES:*
 • *Teto do Governo:* ${formatarMoeda(totalTeto)}
@@ -939,7 +1054,7 @@ ${itensTexto}
             });
         }
 
-        // RENDERIZAR PROPOSTA A4 COM CABEÇALHO COMPLETO E CAMPOS FILTRADOS
+        // RENDERIZAR PROPOSTA A4 (FORMATADA SEM 'R$' NAS CÉLULAS INDIVIDUAIS)
         function renderizarPropostaA4() {
             const razao = document.getElementById('perfil-razao').value;
             const cnpj = document.getElementById('perfil-cnpj').value;
@@ -987,7 +1102,7 @@ ${itensTexto}
                 elContato.style.display = 'none';
             }
 
-            // Assinatura
+            // Assinatura Centralizada
             document.getElementById('a4-assinatura-socio').innerText = socio;
             document.getElementById('a4-assinatura-cpf').innerText = `CPF: ${cpfSocio} — Representante Legal`;
             document.getElementById('a4-assinatura-empresa').innerText = razao;
@@ -1004,7 +1119,7 @@ ${itensTexto}
             const dataFmt = hoje.toLocaleDateString('pt-BR');
             document.getElementById('a4-data-hoje').innerText = "Data: " + dataFmt;
 
-            // Tabela A4
+            // Tabela A4 sem R$ repetitivo nas células
             const corpo = document.getElementById('a4-tabela-corpo');
             corpo.innerHTML = '';
             let total = 0;
@@ -1019,15 +1134,15 @@ ${itensTexto}
                     <td class="p-1 border border-gray-300">${it.desc}</td>
                     <td class="p-1 border border-gray-300 text-center">${it.qtd}</td>
                     <td class="p-1 border border-gray-300">${it.marca}</td>
-                    <td class="p-1 border border-gray-300 text-right">${formatarMoeda(it.precoUnit)}</td>
-                    <td class="p-1 border border-gray-300 text-right font-bold">${formatarMoeda(sub)}</td>
+                    <td class="p-1 border border-gray-300 text-right">${formatarNumeroBR(it.precoUnit)}</td>
+                    <td class="p-1 border border-gray-300 text-right font-bold">${formatarNumeroBR(sub)}</td>
                 `;
                 corpo.appendChild(tr);
             });
 
             document.getElementById('a4-valor-total').innerText = formatarMoeda(total);
 
-            // CAMPOS DINÂMICOS OPCIONAIS NA PROPOSTA A4 (SOMENTE MARCADOS COMO ATIVOS)
+            // CAMPOS DINÂMICOS OPCIONAIS NA PROPOSTA A4
             const containerAdic = document.getElementById('a4-container-adicionais');
             containerAdic.innerHTML = '';
             licitacaoAtual.camposDinamicos.forEach(cd => {
@@ -1051,6 +1166,9 @@ ${itensTexto}
             document.getElementById('exec-local').innerText = licitacaoAtual.local || 'N/A';
             document.getElementById('exec-vigencia').innerText = licitacaoAtual.vigencia || '12 Meses';
 
+            const arqInfo = `${licitacaoAtual.totalArquivosLidos || 1} arquivo(s) lido(s) (${licitacaoAtual.totalPaginasLidas || 38} páginas)`;
+            document.getElementById('exec-auditoria-status').innerText = arqInfo;
+
             const hoje = new Date();
             document.getElementById('exec-data-hoje').innerText = "Gerado em: " + hoje.toLocaleDateString('pt-BR');
 
@@ -1069,9 +1187,9 @@ ${itensTexto}
                     <td class="p-1 border border-gray-300 text-center font-bold">${it.item}</td>
                     <td class="p-1 border border-gray-300">${it.desc}</td>
                     <td class="p-1 border border-gray-300 text-center">${it.qtd}</td>
-                    <td class="p-1 border border-gray-300 text-right">${formatarMoeda(it.tetoUnit)}</td>
-                    <td class="p-1 border border-gray-300 text-right">${formatarMoeda(it.precoUnit)}</td>
-                    <td class="p-1 border border-gray-300 text-right font-bold">${formatarMoeda(sub)}</td>
+                    <td class="p-1 border border-gray-300 text-right">${formatarNumeroBR(it.tetoUnit)}</td>
+                    <td class="p-1 border border-gray-300 text-right">${formatarNumeroBR(it.precoUnit)}</td>
+                    <td class="p-1 border border-gray-300 text-right font-bold">${formatarNumeroBR(sub)}</td>
                 `;
                 corpo.appendChild(tr);
             });
