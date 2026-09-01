@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LBTM — Central de Licitações Públicas v2.0</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        lbtm: {
+                            bg: '#0b0f17',
+                            card: '#131b2e',
+                            border: '#1f2d4a',
+                            accent: '#10b981',
+                            cyan: '#06b6d4',
+                            warning: '#f59e0b',
+                            danger: '#ef4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0b0f17; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+        .tab-btn.active { border-bottom: 3px solid #10b981; color: #10b981; font-weight: bold; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; color: black; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- HEADER & NAVBAR -->
+    <header class="bg-lbtm-card border-b border-lbtm-border p-4 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-lbtm-accent flex items-center justify-center font-bold text-black text-xl">
+                    LBTM
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white leading-tight">Central de Licitações</h1>
+                    <p class="text-xs text-gray-400">Inteligência Estratégica em Editais — Lei nº 14.133/2021</p>
+                </div>
+            </div>
+            
+            <!-- CONTROLES DE SESSÃO -->
+            <div class="flex items-center space-x-2">
+                <button onclick="limparSessaoNovaLicitacao()" class="px-3 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 rounded-lg text-xs font-semibold flex items-center transition">
+                    🔄 Nova Licitação (Limpar Tela)
+                </button>
+                <button onclick="exportarRelatorioWhatsapp()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-bold rounded-lg text-xs flex items-center transition shadow-lg shadow-emerald-900/30">
+                    📲 Copiar para WhatsApp
+                </button>
+            </div>
+        </div>
+
+        <!-- NAVEGAÇÃO POR ABAS -->
+        <nav class="max-w-7xl mx-auto flex space-x-6 mt-4 border-b border-lbtm-border overflow-x-auto text-sm">
+            <button onclick="trocarAba('aba-leitura')" id="btn-aba-leitura" class="tab-btn active py-2 text-gray-300 whitespace-nowrap">📁 1. Leitura do Edital</button>
+            <button onclick="trocarAba('aba-diagnostico')" id="btn-aba-diagnostico" class="tab-btn py-2 text-gray-300 whitespace-nowrap">🚦 2. Diagnóstico & Riscos</button>
+            <button onclick="trocarAba('aba-planilha')" id="btn-aba-planilha" class="tab-btn py-2 text-gray-300 whitespace-nowrap">💰 3. Planilha & Precificação</button>
+            <button onclick="trocarAba('aba-perfil')" id="btn-aba-perfil" class="tab-btn py-2 text-gray-300 whitespace-nowrap">🏢 4. Perfil LBTM & Campos</button>
+            <button onclick="trocarAba('aba-proposta')" id="btn-aba-proposta" class="tab-btn py-2 text-gray-300 whitespace-nowrap">📄 5. Proposta A4 Oficial</button>
+        </nav>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 space-y-6">
+
+        <!-- ABA 1: LEITURA DO EDITAL -->
+        <section id="aba-leitura" class="tab-content block space-y-6">
+            <div class="bg-lbtm-card border border-lbtm-border rounded-xl p-6">
+                <h2 class="text-xl font-bold text-emerald-400 mb-2">Upload e Análise Robótica do PDF</h2>
+                <p class="text-xs text-gray-400 mb-4">Selecione até 5 PDFs do edital (Termo de Referência, Avisos, TJDL). O processamento ocorre 100% no seu aparelho.</p>
+
+                <div class="border-2 border-dashed border-lbtm-border rounded-xl p-8 text-center hover:border-emerald-500/50 transition">
+                    <input type="file" id="pdf-input" multiple accept="application/pdf" class="hidden" onchange="processarPDFs(event)">
+                    <label for="pdf-input" class="cursor-pointer space-y-3 block">
+                        <div class="text-4xl">📄</div>
+                        <span class="text-sm font-semibold text-emerald-400 block">Clique para selecionar os PDFs do Edital</span>
+                        <span class="text-xs text-gray-500 block">Capitania, Polícia Penal, USP, Prefeituras, etc.</span>
+                    </label>
+                </div>
+
+                <div id="status-leitura" class="mt-4 text-xs text-gray-400 hidden">
+                    <div class="flex items-center space-x-2">
+                        <div class="spinner w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+                        <span id="texto-status">Processando arquivos...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DADOS BÁSICOS EXTRAÍDOS -->
+            <div class="bg-lbtm-card border border-lbtm-border rounded-xl p-6 space-y-4">
+                <h3 class="text-md font-bold text-white flex items-center justify-between">
+                    <span>📌 Informações Gerais do Processo</span>
+                    <span class="text-xs font-normal text-gray-400">Campos Editáveis</span>
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Órgão Contratante</label>
+                        <input type="text" id="info-orgao" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white text-xs" placeholder="Ex: Capitania Fluvial do Tietê-Paraná">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Processo / Dispensa / Pregão</label>
+                        <input type="text" id="info-processo" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white text-xs" placeholder="Ex: Dispensa Eletrônica nº 32/2026">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">UASG / Código</label>
+                        <input type="text" id="info-uasg" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white text-xs" placeholder="Ex: 789320">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Local de Execução</label>
+                        <input type="text" id="info-local" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white text-xs" placeholder="Ex: Barra Bonita - SP">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Valor Total Teto Referência (R$)</label>
+                        <input type="number" step="0.01" id="info-teto" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-emerald-400 font-bold text-xs" placeholder="Ex: 63676.27" onchange="atualizarCalculos()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Prazo de Vigência</label>
+                        <input type="text" id="info-vigencia" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white text-xs" placeholder="Ex: 12 Meses">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA 2: DIAGNÓSTICO DE RISCOS -->
+        <section id="aba-diagnostico" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <!-- SINAL VERMELHO -->
+                <div class="bg-lbtm-card border border-red-500/30 rounded-xl p-5 space-y-3">
+                    <div class="flex items-center space-x-2 text-red-400 font-bold">
+                        <span class="text-xl">🛑</span>
+                        <h3>Sinal Vermelho (Prazos & Habilitação)</h3>
+                    </div>
+                    <ul class="text-xs space-y-2 text-gray-300" id="lista-riscos-vermelho">
+                        <li class="flex items-start space-x-1"><span>•</span> <span><strong>Atestado de Capacidade Técnica:</strong> Exige comprovação de no mínimo 1 ano em serviços equivalentes.</span></li>
+                        <li class="flex items-start space-x-1"><span>•</span> <span><strong>Vedação de Subcontratação:</strong> Proibida a execução por terceiros não registrados.</span></li>
+                        <li class="flex items-start space-x-1"><span>•</span> <span><strong>Prazo do Sistema:</strong> Apenas 3 horas para envio da documentação no Compras.gov.br após arrematar.</span></li>
+                    </ul>
+                </div>
+
+                <!-- SINAL AMARELO -->
+                <div class="bg-lbtm-card border border-yellow-500/30 rounded-xl p-5 space-y-3">
+                    <div class="flex items-center space-x-2 text-yellow-400 font-bold">
+                        <span class="text-xl">🟡</span>
+                        <h3>Sinal Amarelo (Atenção Operacional)</h3>
+                    </div>
+                    <ul class="text-xs space-y-2 text-gray-300" id="lista-riscos-amarelo">
+                        <li class="flex items-start space-x-1"><span>•</span> <span><strong>Regra de Sustentabilidade:</strong> Recolhimento obrigatório de fluidos/gás e logística reversa de óleos/peças velhas.</span></li>
+                        <li class="flex items-start space-x-1"><span>•</span> <span><strong>Omissão de BTUs:</strong> Verificar capacidades não descritas antes do lance.</span></li>
+                        <li class="flex items-start space-x-1"><span>•</span> <span><strong>Validade da Proposta:</strong> Mínimo de 60 dias corridos.</span></li>
+                    </ul>
+                </div>
+
+                <!-- SINAL VERDE -->
+                <div class="bg-lbtm-card border border-emerald-500/30 rounded-xl p-5 space-y-3">
+                    <div class="flex items-center space-x-2 text-emerald-400 font-bold">
+                        <span class="text-xl">🟢</span>
+                        <h3>Sinal Verde (Documentação)</h3>
+                    </div>
+                    <ul class="text-xs space-y-2 text-gray-300">
+                        <li>• Cartão CNPJ + CND Federal / INSS</li>
+                        <li>• CND Estadual + CND Municipal (Barra Bonita / Sede)</li>
+                        <li>• CRF FGTS + CNDT Trabalhista</li>
+                        <li>• Balanço Patrimonial / Certidão Negativa de Falência</li>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ABA 3: PLANILHA INTERATIVA DE PREÇOS -->
+        <section id="aba-planilha" class="tab-content hidden space-y-6">
+            <div class="bg-lbtm-card border border-lbtm-border rounded-xl p-6 space-y-4">
+                
+                <div class="flex flex-wrap justify-between items-center gap-4 border-b border-lbtm-border pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Planilha de Preços & Marcas LBTM</h2>
+                        <p class="text-xs text-gray-400">Cote as marcas e os valores unitários propostos para a disputa.</p>
+                    </div>
+                    <button onclick="adicionarLinhaItem()" class="px-3 py-2 bg-lbtm-cyan/20 hover:bg-lbtm-cyan/30 text-lbtm-cyan border border-lbtm-cyan/30 rounded-lg text-xs font-semibold">
+                        + Adicionar Item Manualmente
+                    </button>
+                </div>
+
+                <!-- RESUMO FINANCEIRO E TRAVAS -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-lbtm-bg p-4 rounded-lg text-xs">
+                    <div>
+                        <span class="text-gray-400 block">Teto Referência Governo:</span>
+                        <span id="resumo-teto" class="text-lg font-bold text-white">R$ 0,00</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 block">Total Proposto LBTM:</span>
+                        <span id="resumo-proposto" class="text-lg font-bold text-emerald-400">R$ 0,00</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 block">Desconto Aplicado (%):</span>
+                        <span id="resumo-desconto" class="text-lg font-bold text-lbtm-cyan">0.00%</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 block">Status da Trava Legal:</span>
+                        <span id="resumo-status-trava" class="text-xs font-bold text-emerald-400 block mt-1">🟢 Proposta Exequível</span>
+                    </div>
+                </div>
+
+                <!-- TABELA DE ITENS -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-lbtm-bg border-b border-lbtm-border text-gray-400">
+                                <th class="p-2">Item</th>
+                                <th class="p-2">Descrição do Serviço / Equipamento</th>
+                                <th class="p-2 w-20">Qtd</th>
+                                <th class="p-2 w-28">Teto Unit. (R$)</th>
+                                <th class="p-2 w-32">Marca / Fabricante</th>
+                                <th class="p-2 w-28">LBTM Unit. (R$)</th>
+                                <th class="p-2 w-28">LBTM Total (R$)</th>
+                                <th class="p-2 w-10 text-center">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-tabela-itens" class="divide-y divide-lbtm-border">
+                            <!-- Inserido dinamicamente via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ABA 4: PERFIL LBTM & CAMPOS ADICIONAIS -->
+        <section id="aba-perfil" class="tab-content hidden space-y-6">
+            <div class="bg-lbtm-card border border-lbtm-border rounded-xl p-6 space-y-4">
+                <h2 class="text-xl font-bold text-white">Cadastro do Proponente (LBTM)</h2>
+                <p class="text-xs text-gray-400">Os dados cadastrados abaixo são utilizados para montar a Proposta Comercial A4 Oficial.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <label class="text-gray-400 block mb-1">Razão Social</label>
+                        <input type="text" id="perfil-razao" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="LBTM INSTALACAO MANUTENCAO E REFORMA LTDA">
+                    </div>
+                    <div>
+                        <label class="text-gray-400 block mb-1">CNPJ</label>
+                        <input type="text" id="perfil-cnpj" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="51.278.693/0001-10">
+                    </div>
+                    <div>
+                        <label class="text-gray-400 block mb-1">Sócio Administrador / Representante</label>
+                        <input type="text" id="perfil-socio" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="Leandro Barbieri">
+                    </div>
+                    <div>
+                        <label class="text-gray-400 block mb-1">E-mail de Contato</label>
+                        <input type="email" id="perfil-email" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="contato@lbtm.com.br">
+                    </div>
+                </div>
+
+                <!-- CAMPOS ADICIONAIS DINÂMICOS -->
+                <div class="border-t border-lbtm-border pt-4 mt-4 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-emerald-400">➕ Campos Dinâmicos (Exigências do Edital)</h3>
+                        <button onclick="adicionarCampoDinamicoPerfil()" class="px-2 py-1 bg-emerald-600/20 text-emerald-400 text-xs rounded border border-emerald-500/30">
+                            + Adicionar Exigência
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400">Adicione campos específicos pedidos neste edital (ex: Dados Bancários, Inscrição CREA, Conta Corrente, etc.).</p>
+
+                    <div id="container-campos-dinamicos" class="space-y-2">
+                        <!-- Linhas dinâmicas -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA 5: PROPOSTA COMERCIAL A4 -->
+        <section id="aba-proposta" class="tab-content hidden space-y-6">
+            <div class="no-print bg-lbtm-card p-4 rounded-xl flex justify-between items-center">
+                <span class="text-xs text-gray-400">Visualize abaixo a Proposta Comercial formatada no padrão oficial A4 para impressão/PDF.</span>
+                <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-bold rounded-lg text-xs">
+                    🖨️ Imprimir / Salvar PDF
+                </button>
+            </div>
+
+            <!-- DOCUMENTO A4 -->
+            <div id="folha-proposta-a4" class="bg-white text-black p-8 rounded shadow-2xl max-w-4xl mx-auto space-y-6 text-xs">
+                
+                <!-- CABEÇALHO PROPOSTA -->
+                <div class="border-b-2 border-gray-800 pb-4 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-lg font-bold uppercase tracking-wider" id="a4-razao">LBTM INSTALACAO MANUTENCAO E REFORMA LTDA</h1>
+                        <p id="a4-cnpj">CNPJ: 51.278.693/0001-10</p>
+                        <p id="a4-email">Contato: contato@lbtm.com.br</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-bold block">PROPOSTA COMERCIAL</span>
+                        <span class="text-gray-600 block" id="a4-data-hoje">Data: 01/09/2026</span>
+                    </div>
+                </div>
+
+                <!-- DESTINATÁRIO -->
+                <div class="bg-gray-100 p-3 rounded space-y-1">
+                    <p><strong>AO:</strong> <span id="a4-orgao">Capitania Fluvial do Tietê-Paraná</span></p>
+                    <p><strong>PROCESSO / MODALIDADE:</strong> <span id="a4-processo">Dispensa Eletrônica nº 32/2026</span> | <strong>UASG:</strong> <span id="a4-uasg">789320</span></p>
+                    <p><strong>LOCALIDADE:</strong> <span id="a4-local">Barra Bonita - SP</span></p>
+                </div>
+
+                <!-- TABELA PROPOSTA A4 -->
+                <div>
+                    <h3 class="font-bold border-b border-gray-400 pb-1 mb-2">PLANILHA DE PREÇOS PROPOSTOS</h3>
+                    <table class="w-full text-left border-collapse border border-gray-300">
+                        <thead>
+                            <tr class="bg-gray-200 text-gray-800 border-b border-gray-300">
+                                <th class="p-1 border border-gray-300">Item</th>
+                                <th class="p-1 border border-gray-300">Descrição do Serviço</th>
+                                <th class="p-1 border border-gray-300 w-12 text-center">Qtd</th>
+                                <th class="p-1 border border-gray-300 w-24">Marca</th>
+                                <th class="p-1 border border-gray-300 w-20 text-right">Unit. (R$)</th>
+                                <th class="p-1 border border-gray-300 w-24 text-right">Total (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="a4-tabela-corpo">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="font-bold bg-gray-100">
+                                <td colspan="5" class="p-2 text-right border border-gray-300">VALOR TOTAL DA PROPOSTA:</td>
+                                <td id="a4-valor-total" class="p-2 text-right border border-gray-300">R$ 0,00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- CAMPOS ADICIONAIS NA PROPOSTA -->
+                <div id="a4-container-adicionais" class="space-y-1 pt-2 border-t border-gray-300">
+                    <!-- Inserido dinamicamente -->
+                </div>
+
+                <!-- TERMO DE COMPROMISSO -->
+                <div class="pt-4 text-gray-700 space-y-2 text-[10px]">
+                    <p> Declaramos que nos preços propostos estão inclusos todos os custos operacionais, encargos previdenciários, trabalhistas, tributários e comerciais que incidam sobre a execução dos serviços.</p>
+                    <p> Validade da Proposta: 60 (sessenta) dias corridos.</p>
+                </div>
+
+                <!-- ASSINATURA -->
+                <div class="pt-8 text-center">
+                    <div class="w-64 border-t border-gray-800 mx-auto mb-1"></div>
+                    <p class="font-bold" id="a4-assinatura-socio">Leandro Barbieri</p>
+                    <p class="text-gray-600">LBTM Instalação Manutenção e Reforma LTDA</p>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- LOGIC SCRIPT INTEGRAL -->
+    <script>
+        // ESTADO GLOBAL DA APLICAÇÃO
+        let licitacaoAtual = {
+            orgao: '',
+            processo: '',
+            uasg: '',
+            local: '',
+            tetoTotal: 0,
+            vigencia: '12 Meses',
+            itens: [],
+            camposDinamicos: [
+                { chave: 'Dados Bancários p/ Crédito', valor: 'Banco do Brasil | Ag: 0000-0 | C/C: 00000-0' },
+                { chave: 'Responsável Técnico / CREA', valor: 'Reg. CREA-SP nº XXXXXXXXXX' }
+            ]
+        };
+
+        // ITENS PADRÃO INICIAIS (MARINHA DEMO)
+        const itensPadraoMarinha = [
+            { item: '1', desc: 'Prev. e Limpeza Split (7k a 12k BTU)', qtd: 30, tetoUnit: 185.00, marca: 'Springer/Elgin', precoUnit: 185.00 },
+            { item: '2', desc: 'Prev. e Limpeza Split (18k a 36k BTU)', qtd: 20, tetoUnit: 267.50, marca: 'Springer/Elgin', precoUnit: 267.50 },
+            { item: '3', desc: 'Prev. e Limpeza Split (60k BTU)', qtd: 2, tetoUnit: 392.25, marca: 'Carrier', precoUnit: 392.25 },
+            { item: '4', desc: 'Corretiva Split (7k a 12k BTU) c/ peças', qtd: 29, tetoUnit: 471.67, marca: 'Universal/Original', precoUnit: 471.67 },
+            { item: '5', desc: 'Corretiva Split (18k a 36k BTU) c/ peças', qtd: 20, tetoUnit: 541.67, marca: 'Universal/Original', precoUnit: 541.67 },
+            { item: '6', desc: 'Corretiva Split (60k BTU) c/ peças', qtd: 2, tetoUnit: 568.33, marca: 'Universal/Original', precoUnit: 568.33 },
+            { item: '7', desc: 'Instalação de Ar-Condicionado', qtd: 10, tetoUnit: 1016.13, marca: 'Serviço Direto', precoUnit: 1016.13 },
+            { item: '8', desc: 'Desinstalação de Ar-Condicionado', qtd: 10, tetoUnit: 359.33, marca: 'Serviço Direto', precoUnit: 359.33 },
+            { item: '9', desc: 'Manutenção de Compressor', qtd: 3, tetoUnit: 1822.95, marca: 'Original', precoUnit: 1822.95 },
+            { item: '10', desc: 'Prev./Higienização Bebedouros', qtd: 5, tetoUnit: 740.00, marca: 'IBBL/Karina', precoUnit: 740.00 },
+            { item: '11', desc: 'Preventiva Geladeiras', qtd: 3, tetoUnit: 370.00, marca: 'Electrolux/Brastemp', precoUnit: 370.00 },
+            { item: '12', desc: 'Corretiva Geladeiras c/ peças', qtd: 3, tetoUnit: 770.00, marca: 'Original', precoUnit: 770.00 }
+        ];
+
+        // INICIALIZAÇÃO
+        window.addEventListener('DOMContentLoaded', () => {
+            carregarCamposDinamicosPerfilUI();
+            limparSessaoNovaLicitacao(false); // Carrega demo padrão
+        });
+
+        // TROCA DE ABAS
+        function trocarAba(idAba) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(idAba).classList.remove('hidden');
+            document.getElementById('btn-' + idAba).classList.add('active');
+
+            if (idAba === 'aba-proposta') renderizarPropostaA4();
+        }
+
+        // LIMPAR SESSÃO / NOVA LICITAÇÃO
+        function limparSessaoNovaLicitacao(confirmar = true) {
+            if (confirmar && !confirm("Deseja realmente limpar todos os dados e iniciar uma nova licitação?")) return;
+
+            licitacaoAtual.orgao = "Capitania Fluvial do Tietê-Paraná";
+            licitacaoAtual.processo = "Dispensa Eletrônica nº 32/2026";
+            licitacaoAtual.uasg = "789320";
+            licitacaoAtual.local = "Barra Bonita - SP";
+            licitacaoAtual.tetoTotal = 63676.27;
+            licitacaoAtual.vigencia = "12 Meses";
+            licitacaoAtual.itens = JSON.parse(JSON.stringify(itensPadraoMarinha));
+
+            atualizarCamposUI();
+            renderizarTabelaItens();
+            atualizarCalculos();
+        }
+
+        // ATUALIZAR INTERFACE
+        function atualizarCamposUI() {
+            document.getElementById('info-orgao').value = licitacaoAtual.orgao;
+            document.getElementById('info-processo').value = licitacaoAtual.processo;
+            document.getElementById('info-uasg').value = licitacaoAtual.uasg;
+            document.getElementById('info-local').value = licitacaoAtual.local;
+            document.getElementById('info-teto').value = licitacaoAtual.tetoTotal;
+            document.getElementById('info-vigencia').value = licitacaoAtual.vigencia;
+        }
+
+        // LEITURA DE PDFS (PDF.JS)
+        async function processarPDFs(event) {
+            const files = event.target.files;
+            if (!files.length) return;
+
+            const status = document.getElementById('status-leitura');
+            const textoStatus = document.getElementById('texto-status');
+            status.classList.remove('hidden');
+
+            let textoCompleto = '';
+
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    textoStatus.innerText = `Lendo arquivo ${i + 1} de ${files.length}: ${files[i].name}...`;
+                    const arrayBuffer = await files[i].arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+                    for (let p = 1; p <= pdf.numPages; p++) {
+                        const page = await pdf.getPage(p);
+                        const textContent = await page.getTextContent();
+                        textoCompleto += textContent.items.map(item => item.str).join(' ') + '\n';
+                    }
+                }
+
+                // REGEX DETECTORES SIMPLES
+                if (textoCompleto.includes("CAPITANIA") || textoCompleto.includes("MARINHA")) {
+                    licitacaoAtual.orgao = "Capitania Fluvial do Tietê-Paraná (Marinha do Brasil)";
+                }
+                const matchUasg = textoCompleto.match(/UASG[:\s]+(\d+)/i);
+                if (matchUasg) licitacaoAtual.uasg = matchUasg[1];
+
+                const matchProcesso = textoCompleto.match(/Processo[:\s]+([\d\.\/\-]+)/i);
+                if (matchProcesso) licitacaoAtual.processo = "Processo nº " + matchProcesso[1];
+
+                atualizarCamposUI();
+                textoStatus.innerText = "Leitura concluída com sucesso!";
+                setTimeout(() => status.classList.add('hidden'), 2000);
+
+            } catch (err) {
+                alert("Erro ao ler PDF: " + err.message);
+                status.classList.add('hidden');
+            }
+        }
+
+        // RENDERIZAR TABELA DE ITENS
+        function renderizarTabelaItens() {
+            const corpo = document.getElementById('corpo-tabela-itens');
+            corpo.innerHTML = '';
+
+            licitacaoAtual.itens.forEach((it, idx) => {
+                const subtotal = (it.qtd * it.precoUnit) || 0;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-lbtm-card/50 transition";
+                tr.innerHTML = `
+                    <td class="p-2 font-bold text-gray-400">${it.item}</td>
+                    <td class="p-2"><input type="text" value="${it.desc}" onchange="atualizarItem(${idx}, 'desc', this.value)" class="w-full bg-transparent border-b border-gray-700 p-1 text-white text-xs"></td>
+                    <td class="p-2"><input type="number" value="${it.qtd}" onchange="atualizarItem(${idx}, 'qtd', parseFloat(this.value))" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-white text-xs text-center"></td>
+                    <td class="p-2"><input type="number" step="0.01" value="${it.tetoUnit}" onchange="atualizarItem(${idx}, 'tetoUnit', parseFloat(this.value))" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-gray-400 text-xs"></td>
+                    <td class="p-2"><input type="text" value="${it.marca}" onchange="atualizarItem(${idx}, 'marca', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-emerald-400 font-semibold text-xs"></td>
+                    <td class="p-2"><input type="number" step="0.01" value="${it.precoUnit}" onchange="atualizarItem(${idx}, 'precoUnit', parseFloat(this.value))" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-emerald-400 font-bold text-xs"></td>
+                    <td class="p-2 font-bold text-white text-right">R$ ${subtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-2 text-center"><button onclick="removerItem(${idx})" class="text-red-400 hover:text-red-300">✕</button></td>
+                `;
+                corpo.appendChild(tr);
+            });
+        }
+
+        // ATUALIZAR ITEM
+        function atualizarItem(idx, campo, valor) {
+            licitacaoAtual.itens[idx][campo] = valor;
+            renderizarTabelaItens();
+            atualizarCalculos();
+        }
+
+        // ADICIONAR LINHA
+        function adicionarLinhaItem() {
+            const novoNum = (licitacaoAtual.itens.length + 1).toString();
+            licitacaoAtual.itens.push({
+                item: novoNum,
+                desc: 'Novo Serviço / Item',
+                qtd: 1,
+                tetoUnit: 100.00,
+                marca: 'LBTM',
+                precoUnit: 100.00
+            });
+            renderizarTabelaItens();
+            atualizarCalculos();
+        }
+
+        // REMOVER ITEM
+        function removerItem(idx) {
+            licitacaoAtual.itens.splice(idx, 1);
+            renderizarTabelaItens();
+            atualizarCalculos();
+        }
+
+        // ATUALIZAR CÁLCULOS E TRAVAS
+        function atualizarCalculos() {
+            licitacaoAtual.orgao = document.getElementById('info-orgao').value;
+            licitacaoAtual.processo = document.getElementById('info-processo').value;
+            licitacaoAtual.uasg = document.getElementById('info-uasg').value;
+            licitacaoAtual.local = document.getElementById('info-local').value;
+            licitacaoAtual.tetoTotal = parseFloat(document.getElementById('info-teto').value) || 0;
+
+            let totalProposto = 0;
+            let totalTetoCalculado = 0;
+
+            licitacaoAtual.itens.forEach(it => {
+                totalProposto += (it.qtd * it.precoUnit) || 0;
+                totalTetoCalculado += (it.qtd * it.tetoUnit) || 0;
+            });
+
+            const tetoRef = licitacaoAtual.tetoTotal || totalTetoCalculado;
+            const desconto = tetoRef > 0 ? ((tetoRef - totalProposto) / tetoRef) * 100 : 0;
+
+            document.getElementById('resumo-teto').innerText = 'R$ ' + tetoRef.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            document.getElementById('resumo-proposto').innerText = 'R$ ' + totalProposto.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            document.getElementById('resumo-desconto').innerText = desconto.toFixed(2) + '%';
+
+            const statusTrava = document.getElementById('resumo-status-trava');
+            if (desconto > 50) {
+                statusTrava.className = "text-xs font-bold text-red-400 block mt-1";
+                statusTrava.innerText = "🚨 ALERTA: Desconto > 50% (Risco Inexequibilidade)";
+            } else if (totalProposto > tetoRef) {
+                statusTrava.className = "text-xs font-bold text-yellow-400 block mt-1";
+                statusTrava.innerText = "⚠️ ALERTA: Proposta Acima do Teto";
+            } else {
+                statusTrava.className = "text-xs font-bold text-emerald-400 block mt-1";
+                statusTrava.innerText = "🟢 Proposta Exequível";
+            }
+        }
+
+        // GERAR E COPIAR RESUMO EXECUTIVO WHATSAPP
+        function exportarRelatorioWhatsapp() {
+            let totalProposto = 0;
+            let totalTeto = licitacaoAtual.tetoTotal || 0;
+
+            let itensTexto = '';
+            licitacaoAtual.itens.forEach(it => {
+                const sub = (it.qtd * it.precoUnit) || 0;
+                totalProposto += sub;
+                itensTexto += `🔹 *Item ${it.item}:* ${it.desc} | Qtd: ${it.qtd} | *R$ ${it.precoUnit.toFixed(2)}*\n`;
+            });
+
+            const desconto = totalTeto > 0 ? ((totalTeto - totalProposto) / totalTeto) * 100 : 0;
+
+            const msg = 
+`📊 *RELATÓRIO EXECUTIVO - LICITAÇÃO LBTM*
+🏛️ *Órgão:* ${licitacaoAtual.orgao || 'Não informado'}
+📋 *Processo:* ${licitacaoAtual.processo || 'N/A'} (UASG: ${licitacaoAtual.uasg || 'N/A'})
+📍 *Local:* ${licitacaoAtual.local || 'N/A'}
+
+💰 *VALORES:*
+• *Teto do Governo:* R$ ${totalTeto.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+• *Proposta LBTM:* R$ ${totalProposto.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+• *Margem/Desconto:* ${desconto.toFixed(2)}%
+
+🛑 *PONTOS CRÍTICOS & ALERTAS:*
+• Atestado Mínimo de 1 ano em serviços equivalentes.
+• Vedada a Subcontratação.
+• Prazo do Sistema: 3 horas para envio da documentação após o lance.
+
+📦 *RESUMO DOS PREÇOS COTADOS:*
+${itensTexto}
+💬 *Decisão do Orçamento:* Leandro, favor confirmar a margem final para o lance no sistema!`;
+
+            navigator.clipboard.writeText(msg).then(() => {
+                alert("📲 Relatório executivo copiado com sucesso! Abra o WhatsApp e cole no chat do Leandro.");
+            }).catch(err => {
+                alert("Erro ao copiar: " + err);
+            });
+        }
+
+        // RENDERIZAR PROPOSTA A4
+        function renderizarPropostaA4() {
+            document.getElementById('a4-razao').innerText = document.getElementById('perfil-razao').value;
+            document.getElementById('a4-cnpj').innerText = "CNPJ: " + document.getElementById('perfil-cnpj').value;
+            document.getElementById('a4-email').innerText = "Contato: " + document.getElementById('perfil-email').value;
+            document.getElementById('a4-assinatura-socio').innerText = document.getElementById('perfil-socio').value;
+
+            document.getElementById('a4-orgao').innerText = licitacaoAtual.orgao;
+            document.getElementById('a4-processo').innerText = licitacaoAtual.processo;
+            document.getElementById('a4-uasg').innerText = licitacaoAtual.uasg;
+            document.getElementById('a4-local').innerText = licitacaoAtual.local;
+
+            const corpo = document.getElementById('a4-tabela-corpo');
+            corpo.innerHTML = '';
+            let total = 0;
+
+            licitacaoAtual.itens.forEach(it => {
+                const sub = (it.qtd * it.precoUnit) || 0;
+                total += sub;
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-gray-200";
+                tr.innerHTML = `
+                    <td class="p-1 border border-gray-300 font-bold">${it.item}</td>
+                    <td class="p-1 border border-gray-300">${it.desc}</td>
+                    <td class="p-1 border border-gray-300 text-center">${it.qtd}</td>
+                    <td class="p-1 border border-gray-300">${it.marca}</td>
+                    <td class="p-1 border border-gray-300 text-right">R$ ${it.precoUnit.toFixed(2)}</td>
+                    <td class="p-1 border border-gray-300 text-right font-bold">R$ ${sub.toFixed(2)}</td>
+                `;
+                corpo.appendChild(tr);
+            });
+
+            document.getElementById('a4-valor-total').innerText = 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
+            // CAMPOS DINÂMICOS NA PROPOSTA A4
+            const containerAdic = document.getElementById('a4-container-adicionais');
+            containerAdic.innerHTML = '';
+            licitacaoAtual.camposDinamicos.forEach(cd => {
+                const p = document.createElement('p');
+                p.innerHTML = `<strong>${cd.chave}:</strong> ${cd.valor}`;
+                containerAdic.appendChild(p);
+            });
+        }
+
+        // CAMPOS DINÂMICOS PERFIL UI
+        function carregarCamposDinamicosPerfilUI() {
+            const container = document.getElementById('container-campos-dinamicos');
+            container.innerHTML = '';
+
+            licitacaoAtual.camposDinamicos.forEach((cd, idx) => {
+                const div = document.createElement('div');
+                div.className = "flex space-x-2 items-center text-xs";
+                div.innerHTML = `
+                    <input type="text" value="${cd.chave}" onchange="licitacaoAtual.camposDinamicos[${idx}].chave = this.value" class="w-1/3 bg-lbtm-bg border border-lbtm-border rounded p-1 text-gray-300" placeholder="Nome do Campo">
+                    <input type="text" value="${cd.valor}" onchange="licitacaoAtual.camposDinamicos[${idx}].valor = this.value" class="w-2/3 bg-lbtm-bg border border-lbtm-border rounded p-1 text-white" placeholder="Valor / Informação">
+                    <button onclick="removerCampoDinamicoPerfil(${idx})" class="text-red-400 p-1">✕</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function adicionarCampoDinamicoPerfil() {
+            licitacaoAtual.camposDinamicos.push({ chave: 'Novo Campo', valor: '' });
+            carregarCamposDinamicosPerfilUI();
+        }
+
+        function removerCampoDinamicoPerfil(idx) {
+            licitacaoAtual.camposDinamicos.splice(idx, 1);
+            carregarCamposDinamicosPerfilUI();
+        }
+    </script>
+</body>
+</html>
