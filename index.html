@@ -781,6 +781,40 @@
                     </div>
                 </div>
 
+                <!-- REQUISITOS TÉCNICOS & NRs DO TR (BLOCO DE IMPRESSÃO A4) -->
+                <div class="space-y-2 border-t border-gray-300 pt-2.5">
+                    <h3 class="font-bold text-[12px] uppercase border-b border-gray-300 pb-1 text-gray-800 flex items-center justify-between">
+                        <span>⚙️ Requisitos Técnicos, Materiais e NRs do TR</span>
+                        <span class="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300">Conformidade Técnica</span>
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                        <div class="border border-cyan-300 bg-cyan-50 p-2.5 rounded text-[11px] space-y-1">
+                            <strong class="text-cyan-900 block text-[11.5px]">📜 Normas Regulamentadoras & ABNT</strong>
+                            <div id="exec-container-nrs" class="flex flex-wrap gap-1">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+                        <div class="border border-emerald-300 bg-emerald-50 p-2.5 rounded text-[11px] space-y-1">
+                            <strong class="text-emerald-900 block text-[11.5px]">❄️ Gases Refrigerantes & Sustentabilidade</strong>
+                            <div id="exec-container-gases" class="flex flex-wrap gap-1">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+                        <div class="border border-amber-300 bg-amber-50 p-2.5 rounded text-[11px] space-y-1">
+                            <strong class="text-amber-900 block text-[11.5px]">🔩 Materiais & Engenharia</strong>
+                            <div id="exec-container-materiais" class="flex flex-wrap gap-1">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-300 p-2 rounded text-[10.5px] text-gray-700 space-y-0.5">
+                        <strong class="text-gray-900 block text-[11px]">⚠️ Alertas Críticos do Termo de Referência:</strong>
+                        <ul id="exec-lista-alertas-tr" class="list-disc pl-4 space-y-0.5 text-gray-700">
+                            <!-- Preenchido via JS -->
+                        </ul>
+                    </div>
+                </div>
+
                 <!-- TABELA RESUMIDA DE ITENS -->
                 <div>
                     <h3 class="font-bold text-[12px] uppercase border-b border-gray-300 pb-1 mb-2 text-gray-800">📦 Resumo da Composição de Preços</h3>
@@ -931,7 +965,12 @@
             if (btnEl) btnEl.classList.add('active');
 
             if (idAba === 'aba-proposta') renderizarPropostaA4();
-            if (idAba === 'aba-diagnostico') atualizarCalculos();
+            if (idAba === 'aba-diagnostico') {
+                atualizarCalculos();
+                renderizarRiscosUI(licitacaoAtual.riscos);
+                renderizarRequisitosTecnicosUI(licitacaoAtual.requisitosTecnicos);
+            }
+            if (idAba === 'aba-executivo-pdf') renderizarRelatorioExecutivoPDF();
             if (idAba === 'aba-perfil') {
                 renderizarSelectPerfis();
                 carregarCamposDinamicosPerfilUI();
@@ -1680,33 +1719,51 @@
             };
         }
 
-        // RENDERIZAR REQUISITOS TÉCNICOS NA ABA 2
+        // RENDERIZAR REQUISITOS TÉCNICOS NA ABA 2 E NO RELATÓRIO EXECUTIVO A4
         function renderizarRequisitosTecnicosUI(reqs) {
             const r = reqs || (licitacaoAtual && licitacaoAtual.requisitosTecnicos);
             if (!r) return;
 
-            // NRs
+            // --- 1. ELEMENTOS NA ABA 2 (INTERFACE DE TELA) ---
             const cNRs = document.getElementById('container-nrs-detectadas');
             if (cNRs && r.nrs) {
                 cNRs.innerHTML = r.nrs.map(n => `<span class="px-2 py-0.5 bg-cyan-950/40 text-cyan-300 border border-cyan-500/40 rounded text-[11px] font-semibold">${n}</span>`).join('');
             }
 
-            // Gases
             const cGases = document.getElementById('container-gases-detectados');
             if (cGases && r.gases) {
                 cGases.innerHTML = r.gases.map(g => `<span class="px-2 py-0.5 bg-emerald-950/40 text-emerald-300 border border-emerald-500/40 rounded text-[11px] font-semibold">${g}</span>`).join('');
             }
 
-            // Materiais
             const cMat = document.getElementById('container-materiais-detectados');
             if (cMat && r.materiais) {
                 cMat.innerHTML = r.materiais.map(m => `<span class="px-2 py-0.5 bg-amber-950/40 text-amber-300 border border-amber-500/40 rounded text-[11px] font-semibold">${m}</span>`).join('');
             }
 
-            // Alertas
             const lAlertas = document.getElementById('lista-alertas-tecnicos-tr');
             if (lAlertas && r.alertas) {
                 lAlertas.innerHTML = r.alertas.map(a => `<li>${a}</li>`).join('');
+            }
+
+            // --- 2. ELEMENTOS NO RELATÓRIO EXECUTIVO A4 (IMPRESSÃO / PDF) ---
+            const execNRs = document.getElementById('exec-container-nrs');
+            if (execNRs && r.nrs) {
+                execNRs.innerHTML = r.nrs.map(n => `<span class="px-1.5 py-0.5 bg-cyan-100 text-cyan-900 border border-cyan-300 rounded text-[10.5px] font-semibold">${n}</span>`).join('');
+            }
+
+            const execGases = document.getElementById('exec-container-gases');
+            if (execGases && r.gases) {
+                execGases.innerHTML = r.gases.map(g => `<span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded text-[10.5px] font-semibold">${g}</span>`).join('');
+            }
+
+            const execMat = document.getElementById('exec-container-materiais');
+            if (execMat && r.materiais) {
+                execMat.innerHTML = r.materiais.map(m => `<span class="px-1.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded text-[10.5px] font-semibold">${m}</span>`).join('');
+            }
+
+            const execAlertas = document.getElementById('exec-lista-alertas-tr');
+            if (execAlertas && r.alertas) {
+                execAlertas.innerHTML = r.alertas.map(a => `<li>${a}</li>`).join('');
             }
         }
 
@@ -2219,6 +2276,8 @@ ${itensTexto}
         // ==========================================
         function renderizarRelatorioExecutivoPDF() {
             atualizarCalculos();
+            renderizarRiscosUI(licitacaoAtual.riscos);
+            renderizarRequisitosTecnicosUI(licitacaoAtual.requisitosTecnicos);
 
             document.getElementById('exec-orgao').innerText = licitacaoAtual.orgao || 'Não informado';
             document.getElementById('exec-processo').innerText = licitacaoAtual.processo || 'N/A';
