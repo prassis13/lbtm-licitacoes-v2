@@ -1,4 +1,31 @@
 <!DOCTYPE html>
+<!--
+========================================================================================
+LBTM LICITAÇÕES v2.0 — PROTOCOLO ARQUITETURAL: REGRA DA TRÍADE DE CAUSA E EFEITO
+========================================================================================
+DIRETRIZ ARQUITETURAL COMPORTAMENTAL PERMANENTE DE LÓGICA INTEGRAL & SAÍDA UNIFICADA:
+
+Sempre que uma informação, campo, tabela, bloco ou diagnóstico for criado ou modificado
+na aplicação, a ação NÃO ESTÁ CONCLUÍDA até que ela seja refletida nas 3 pontas simultaneamente:
+
+  • PONTA A (TELA DE INTERFACE):
+    O elemento é desenhado e renderizado na Aba correspondente (ex: Aba 1 Leitura,
+    Aba 2 Diagnóstico, Aba 3 Planilha, Aba 4 Perfil).
+
+  • PONTA B (IMPRESSÃO / RELATÓRIO A4):
+    A mesma informação é conectada à função de renderização A4 (renderizarRelatorioExecutivoPDF
+    ou renderizarPropostaA4) para sair no layout de impressão (@media print) com formatação
+    proporcional e legível (11px / 12px).
+
+  • PONTA C (MEMÓRIA / HISTÓRICO):
+    A informação é mapeada no objeto de persistência (dadosCompletos / licitacaoAtual),
+    permitindo salvar na Gaveta (localStorage / .lbtm) e restaurar integralmente sem perda de dados.
+
+MECANISMO DE EXECUÇÃO MANDATÓRIO:
+Nunca criar um elemento visual isolado na PONTA A sem escrever o código correspondente
+na PONTA B e na PONTA C.
+========================================================================================
+-->
 <html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
@@ -855,10 +882,12 @@
     <!-- LOGIC SCRIPT INTEGRAL -->
     <script>
         // =========================================================================
-        // DIRETRIZ DE LÓGICA INTEGRAL (REGRA COMPORTAMENTAL PERMANENTE):
-        // Qualquer alteração, campo, bloco ou dado inserido nas abas da interface
-        // DEVE ser obrigatoriamente espelhado no Relatório Executivo A4 de Impressão
-        // (@media print) e salvo no objeto da Gaveta de Histórico.
+        // PROTOCOLO DA TRÍADE DE CAUSA E EFEITO (DIRETRIZ ARQUITETURAL PERMANENTE):
+        // Qualquer informação criada ou modificada DEVE ser refletida nas 3 pontas:
+        // • PONTA A (TELA): Renderizada na Aba correspondente.
+        // • PONTA B (IMPRESSÃO A4): Espelhada em renderizarRelatorioExecutivoPDF / A4.
+        // • PONTA C (MEMÓRIA/STORAGE): Salva em dadosCompletos na Gaveta/localStorage.
+        // Proibido criar elementos visuais na Ponta A sem as Pontas B e C sincronizadas.
         // =========================================================================
 
         // HELPER DE FORMATAÇÃO MONETÁRIA BRASILEIRA (R$ X.XXX,XX)
