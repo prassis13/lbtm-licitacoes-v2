@@ -92,11 +92,11 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- HEADER & NAVBAR -->
-    <header class="bg-lbtm-card border-b border-lbtm-border p-4 sticky top-0 z-50 no-print">
+    <!-- HEADER & NAVBAR PRINCIPAL (MENU ELEGANTE E COMPACTO) -->
+    <header class="bg-lbtm-card border-b border-lbtm-border p-4 sticky top-0 z-40 no-print shadow-lg">
         <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
-                <div id="header-logo-container" class="w-10 h-10 rounded-lg bg-lbtm-accent flex items-center justify-center font-bold text-black text-xl overflow-hidden">
+                <div id="header-logo-container" class="w-10 h-10 rounded-lg bg-lbtm-accent flex items-center justify-center font-bold text-black text-xl overflow-hidden shadow">
                     <span id="header-logo-text">LBTM</span>
                     <img id="header-logo-img" src="" alt="LBTM" class="w-full h-full object-contain hidden">
                 </div>
@@ -106,13 +106,26 @@
                 </div>
             </div>
             
-            <!-- CONTROLES DE SESSÃO -->
-            <div class="flex items-center space-x-2">
-                <button onclick="limparSessaoNovaLicitacao()" class="px-3 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 rounded-lg text-xs font-semibold flex items-center transition">
-                    🔄 Nova Licitação (Limpar Tela)
+            <!-- BARRA DE FERRAMENTAS PRINCIPAL (MENU COMPACTO) -->
+            <div class="flex items-center flex-wrap gap-2">
+                <button onclick="iniciarNovaLicitacaoComPergunta()" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                    ➕ Novo
                 </button>
-                <button onclick="exportarRelatorioWhatsapp()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-bold rounded-lg text-xs flex items-center transition shadow-lg shadow-emerald-900/30">
-                    📲 Copiar para WhatsApp
+                <button onclick="salvarLicitacaoNaGaveta()" class="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                    💾 Salvar
+                </button>
+                <button onclick="abrirGavetaHistorico()" class="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                    📂 Histórico
+                </button>
+                <button onclick="exportarArquivoLBTM()" class="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition" title="Exportar backup .lbtm do edital atual">
+                    📥 Exportar
+                </button>
+                <button onclick="document.getElementById('import-lbtm-file').click()" class="px-3 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-400 border border-cyan-500/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition" title="Carregar arquivo .lbtm do computador">
+                    📤 Importar
+                </button>
+                <input type="file" id="import-lbtm-file" accept=".lbtm,.json" class="hidden" onchange="importarArquivoLBTM(event)">
+                <button onclick="exportarRelatorioWhatsapp()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-black font-bold rounded-lg text-xs flex items-center gap-1.5 transition shadow-lg shadow-emerald-900/30">
+                    📲 WhatsApp
                 </button>
             </div>
         </div>
@@ -126,6 +139,33 @@
             <button onclick="trocarAba('aba-proposta')" id="btn-aba-proposta" class="tab-btn py-2 text-gray-300 whitespace-nowrap">📄 5. Proposta A4 Oficial</button>
         </nav>
     </header>
+
+    <!-- MODAL GAVETA / HISTÓRICO DE LICITAÇÕES SALVAS -->
+    <div id="modal-historico" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-lbtm-card border border-lbtm-border rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-lbtm-border pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">📂</span>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Gaveta de Licitações Salvas</h3>
+                        <p class="text-xs text-gray-400">Alterne entre processos ou faça backups dos seus editais</p>
+                    </div>
+                </div>
+                <button onclick="fecharGavetaHistorico()" class="text-gray-400 hover:text-white text-lg font-bold p-1">✕</button>
+            </div>
+
+            <div id="lista-licitacoes-gaveta" class="max-h-[60vh] overflow-y-auto space-y-2 pr-1">
+                <!-- Renderizado dinamicamente via JS -->
+            </div>
+
+            <div class="flex justify-between items-center pt-3 border-t border-lbtm-border text-xs text-gray-400">
+                <span id="contador-licitacoes-gaveta">0 licitações salvas</span>
+                <button onclick="fecharGavetaHistorico()" class="px-4 py-2 bg-lbtm-bg border border-lbtm-border text-gray-300 hover:text-white rounded-lg font-semibold transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 space-y-6">
@@ -163,7 +203,7 @@
                 </div>
 
                 <!-- CARD FIXO DE CONFIRMAÇÃO DE AUDITORIA CONCLUSIVA -->
-                <div id="card-confirmacao-auditoria" class="mt-4 bg-emerald-950/40 border border-emerald-500/50 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg shadow-emerald-950/40">
+                <div id="card-confirmacao-auditoria" class="mt-4 bg-emerald-950/40 border border-emerald-500/50 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg shadow-emerald-950/40 hidden">
                     <div class="flex items-center space-x-3">
                         <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl flex-shrink-0">
                             🟢
@@ -685,16 +725,17 @@
             return isNaN(n) ? 0 : n;
         }
 
-        // ESTADO GLOBAL DA APLICAÇÃO
+        // ESTADO GLOBAL DA APLICAÇÃO (VAZIO POR PADRÃO)
         let licitacaoAtual = {
+            id: '',
             orgao: '',
             processo: '',
             uasg: '',
             local: '',
             tetoTotal: 0,
             vigencia: '12 Meses',
-            totalArquivosLidos: 1,
-            totalPaginasLidas: 38,
+            totalArquivosLidos: 0,
+            totalPaginasLidas: 0,
             itens: [],
             camposDinamicos: [
                 { chave: 'Dados Bancários p/ Crédito', valor: 'Banco do Brasil | Ag: 0000-0 | C/C: 00000-0', ativo: true },
@@ -702,7 +743,7 @@
             ]
         };
 
-        // ITENS PADRÃO INICIAIS COMPETITIVOS (DEMO CAPITANIA DOS PORTOS)
+        // ITENS DEMO DA MARINHA (GUARDADOS PARA SEED DA GAVETA)
         const itensPadraoMarinha = [
             { item: '1', desc: 'Prev. e Limpeza Split (7k a 12k BTU)', qtd: 30, tetoUnit: 185.00, marca: 'Springer/Elgin', precoUnit: 185.00 },
             { item: '2', desc: 'Prev. e Limpeza Split (18k a 36k BTU)', qtd: 20, tetoUnit: 267.50, marca: 'Springer/Elgin', precoUnit: 267.50 },
@@ -718,11 +759,19 @@
             { item: '12', desc: 'Corretiva Geladeiras c/ peças', qtd: 3, tetoUnit: 770.00, marca: 'Original', precoUnit: 770.00 }
         ];
 
-        // INICIALIZAÇÃO
+        // INICIALIZAÇÃO DO SISTEMA
         window.addEventListener('DOMContentLoaded', () => {
             carregarPerfilLocalStorage();
-            carregarCamposDinamicosPerfilUI();
-            limparSessaoNovaLicitacao(false); // Carrega demo padrão com cálculos
+            inicializarGavetaComMarinhaDemo();
+            
+            // Carrega o edital ativo ou o primeiro da gaveta
+            const gaveta = carregarGavetaStorage();
+            if (gaveta.length > 0) {
+                carregarObjetoLicitacao(gaveta[0]);
+            } else {
+                resetProcessoData();
+            }
+
             atualizarLogosUI();
         });
 
@@ -739,69 +788,365 @@
 
             if (idAba === 'aba-proposta') renderizarPropostaA4();
             if (idAba === 'aba-diagnostico') atualizarCalculos();
+            if (idAba === 'aba-perfil') carregarCamposDinamicosPerfilUI();
         }
 
-        // LIMPAR SESSÃO / NOVA LICITAÇÃO (SESSÃO ZERO)
-        function limparSessaoNovaLicitacao(confirmar = true) {
-            if (confirmar && !confirm("Deseja realmente limpar todos os dados e iniciar uma nova licitação?")) return;
+        // ==========================================
+        // SISTEMA DE GAVETA & MULTI-LICITAÇÃO (STORAGE)
+        // ==========================================
+        const GAVETA_STORAGE_KEY = 'lbtm_licitacoes_salvas';
 
-            // Reset do estado da licitação
-            licitacaoAtual.orgao = "Capitania Fluvial do Tietê-Paraná";
-            licitacaoAtual.processo = "Dispensa Eletrônica nº 32/2026";
-            licitacaoAtual.uasg = "789320";
-            licitacaoAtual.local = "Barra Bonita - SP";
-            licitacaoAtual.tetoTotal = 63676.27;
-            licitacaoAtual.vigencia = "12 Meses";
-            licitacaoAtual.totalArquivosLidos = 1;
-            licitacaoAtual.totalPaginasLidas = 38;
-            licitacaoAtual.itens = JSON.parse(JSON.stringify(itensPadraoMarinha));
+        function carregarGavetaStorage() {
+            try {
+                const dados = localStorage.getItem(GAVETA_STORAGE_KEY);
+                return dados ? JSON.parse(dados) : [];
+            } catch(e) {
+                console.error("Erro ao ler gaveta:", e);
+                return [];
+            }
+        }
 
-            // Limpar input de arquivos do navegador para liberar memória
+        function salvarGavetaStorage(lista) {
+            try {
+                localStorage.setItem(GAVETA_STORAGE_KEY, JSON.stringify(lista));
+            } catch(e) {
+                console.error("Erro ao salvar gaveta:", e);
+            }
+        }
+
+        function inicializarGavetaComMarinhaDemo() {
+            const gaveta = carregarGavetaStorage();
+            if (gaveta.length === 0) {
+                const demoMarinha = {
+                    id: 'lbtm-marinha-demo',
+                    titulo: 'Capitania Fluvial do Tietê-Paraná — Dispensa Eletrônica nº 32/2026',
+                    dataSalvo: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                    orgao: "Capitania Fluvial do Tietê-Paraná",
+                    processo: "Dispensa Eletrônica nº 32/2026",
+                    uasg: "789320",
+                    local: "Barra Bonita - SP",
+                    tetoTotal: 63676.27,
+                    vigencia: "12 Meses",
+                    totalArquivosLidos: 1,
+                    totalPaginasLidas: 38,
+                    itens: JSON.parse(JSON.stringify(itensPadraoMarinha)),
+                    camposDinamicos: [
+                        { chave: 'Dados Bancários p/ Crédito', valor: 'Banco do Brasil | Ag: 0000-0 | C/C: 00000-0', ativo: true },
+                        { chave: 'Responsável Técnico / CREA', valor: 'Reg. CREA-SP nº XXXXXXXXXX', ativo: true }
+                    ]
+                };
+                salvarGavetaStorage([demoMarinha]);
+            }
+        }
+
+        // SALVAR LICITAÇÃO ATUAL NA GAVETA
+        function salvarLicitacaoNaGaveta(notificar = true) {
+            atualizarCalculos();
+            
+            const orgao = licitacaoAtual.orgao.trim() || 'Órgão Não Informado';
+            const proc = licitacaoAtual.processo.trim() || 'Processo S/N';
+            const agora = new Date();
+            const dataFmt = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            const titulo = `${orgao} — ${proc}`;
+            const id = licitacaoAtual.id || ('lbtm-' + Date.now());
+            licitacaoAtual.id = id;
+
+            let totalProposto = 0;
+            licitacaoAtual.itens.forEach(it => {
+                totalProposto += (it.qtd * it.precoUnit) || 0;
+            });
+
+            const registro = {
+                id: id,
+                titulo: titulo,
+                dataSalvo: dataFmt,
+                totalProposto: totalProposto,
+                orgao: licitacaoAtual.orgao,
+                processo: licitacaoAtual.processo,
+                uasg: licitacaoAtual.uasg,
+                local: licitacaoAtual.local,
+                tetoTotal: licitacaoAtual.tetoTotal,
+                vigencia: licitacaoAtual.vigencia,
+                totalArquivosLidos: licitacaoAtual.totalArquivosLidos,
+                totalPaginasLidas: licitacaoAtual.totalPaginasLidas,
+                itens: JSON.parse(JSON.stringify(licitacaoAtual.itens)),
+                camposDinamicos: JSON.parse(JSON.stringify(licitacaoAtual.camposDinamicos))
+            };
+
+            let gaveta = carregarGavetaStorage();
+            const idxExistente = gaveta.findIndex(g => g.id === id);
+            if (idxExistente >= 0) {
+                gaveta[idxExistente] = registro;
+            } else {
+                gaveta.unshift(registro);
+            }
+
+            salvarGavetaStorage(gaveta);
+
+            if (notificar) {
+                alert(`💾 Licitação "${titulo}" salva com sucesso na Gaveta!`);
+            }
+        }
+
+        // ABRIR GAVETA / MODAL DE HISTÓRICO
+        function abrirGavetaHistorico() {
+            const modal = document.getElementById('modal-historico');
+            const listaEl = document.getElementById('lista-licitacoes-gaveta');
+            const contEl = document.getElementById('contador-licitacoes-gaveta');
+
+            const gaveta = carregarGavetaStorage();
+            listaEl.innerHTML = '';
+            contEl.innerText = `${gaveta.length} licitação(ões) salva(s)`;
+
+            if (gaveta.length === 0) {
+                listaEl.innerHTML = `
+                    <div class="text-center py-8 text-gray-500 text-xs">
+                        <p class="text-2xl mb-2">📭</p>
+                        <p>Nenhuma licitação salva na gaveta ainda.</p>
+                        <p class="mt-1">Clique em <strong>💾 Salvar</strong> para guardar seu edital atual.</p>
+                    </div>
+                `;
+            } else {
+                gaveta.forEach((lic, idx) => {
+                    let totalProp = lic.totalProposto || 0;
+                    if (!totalProp && lic.itens) {
+                        lic.itens.forEach(it => totalProp += (it.qtd * it.precoUnit) || 0);
+                    }
+                    const numItens = lic.itens ? lic.itens.length : 0;
+                    const isAtiva = lic.id === licitacaoAtual.id;
+
+                    const card = document.createElement('div');
+                    card.className = `p-3 rounded-xl border flex flex-wrap justify-between items-center gap-3 transition ${isAtiva ? 'bg-emerald-950/30 border-emerald-500/50' : 'bg-lbtm-bg border-lbtm-border hover:border-gray-600'}`;
+                    card.innerHTML = `
+                        <div class="space-y-1 flex-1 min-w-[200px]">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-xs text-white">${lic.titulo || 'Licitação'}</span>
+                                ${isAtiva ? '<span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] rounded font-bold">ATIVA</span>' : ''}
+                            </div>
+                            <div class="flex flex-wrap gap-x-3 text-[11px] text-gray-400">
+                                <span>💰 Proposta: <strong class="text-emerald-400">${formatarMoeda(totalProp)}</strong></span>
+                                <span>📦 ${numItens} itens</span>
+                                <span>📅 ${lic.dataSalvo || 'Data N/D'}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="carregarLicitacaoDaGaveta('${lic.id}')" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                                🟢 Abrir
+                            </button>
+                            <button onclick="exportarItemGaveta('${lic.id}')" class="px-2.5 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold transition" title="Baixar arquivo .lbtm">
+                                📥 Backup
+                            </button>
+                            <button onclick="excluirLicitacaoDaGaveta('${lic.id}')" class="px-2.5 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold transition" title="Excluir da gaveta">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    listaEl.appendChild(card);
+                });
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function fecharGavetaHistorico() {
+            document.getElementById('modal-historico').classList.add('hidden');
+        }
+
+        function carregarLicitacaoDaGaveta(id) {
+            const gaveta = carregarGavetaStorage();
+            const lic = gaveta.find(g => g.id === id);
+            if (!lic) return;
+
+            carregarObjetoLicitacao(lic);
+            fecharGavetaHistorico();
+            trocarAba('aba-leitura');
+        }
+
+        function excluirLicitacaoDaGaveta(id) {
+            if (!confirm("Deseja realmente excluir esta licitação da Gaveta?")) return;
+            let gaveta = carregarGavetaStorage();
+            gaveta = gaveta.filter(g => g.id !== id);
+            salvarGavetaStorage(gaveta);
+            abrirGavetaHistorico();
+        }
+
+        function exportarItemGaveta(id) {
+            const gaveta = carregarGavetaStorage();
+            const lic = gaveta.find(g => g.id === id);
+            if (!lic) return;
+            baixarJSONBlob(lic, `LBTM_${limparNomeArquivo(lic.orgao)}_${limparNomeArquivo(lic.processo)}.lbtm`);
+        }
+
+        // CARREGAR UM OBJETO DE LICITAÇÃO NA APLICAÇÃO
+        function carregarObjetoLicitacao(lic) {
+            licitacaoAtual = {
+                id: lic.id || ('lbtm-' + Date.now()),
+                orgao: lic.orgao || '',
+                processo: lic.processo || '',
+                uasg: lic.uasg || '',
+                local: lic.local || '',
+                tetoTotal: Number(lic.tetoTotal) || 0,
+                vigencia: lic.vigencia || '12 Meses',
+                totalArquivosLidos: lic.totalArquivosLidos || 0,
+                totalPaginasLidas: lic.totalPaginasLidas || 0,
+                itens: JSON.parse(JSON.stringify(lic.itens || [])),
+                camposDinamicos: JSON.parse(JSON.stringify(lic.camposDinamicos || []))
+            };
+
+            atualizarCamposUI();
+            renderizarTabelaItens();
+            carregarCamposDinamicosPerfilUI();
+            atualizarCalculos();
+
+            const cardAuditoria = document.getElementById('card-confirmacao-auditoria');
+            const txtAuditoria = document.getElementById('texto-auditoria-detalhe');
+            if (licitacaoAtual.totalPaginasLidas > 0) {
+                if (cardAuditoria && txtAuditoria) {
+                    txtAuditoria.innerHTML = `<strong>${licitacaoAtual.totalArquivosLidos || 1}</strong> arquivo(s) lido(s) | <strong>${licitacaoAtual.totalPaginasLidas}</strong> páginas analisadas | <strong>100%</strong> do conteúdo verificado.`;
+                    cardAuditoria.classList.remove('hidden');
+                }
+            } else if (cardAuditoria) {
+                cardAuditoria.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // FLUXO DO BOTÃO "➕ NOVO" & LIMPEZA DE ESTADO
+        // ==========================================
+        function iniciarNovaLicitacaoComPergunta() {
+            // Pergunta preventiva de salvamento
+            const temDados = (licitacaoAtual.orgao && licitacaoAtual.orgao.trim()) || (licitacaoAtual.itens && licitacaoAtual.itens.length > 0);
+            if (temDados) {
+                if (confirm("Deseja salvar a licitação atual na Gaveta antes de iniciar uma nova?")) {
+                    salvarLicitacaoNaGaveta(false);
+                }
+            }
+
+            // Limpeza total de memória e variáveis
+            resetProcessoData();
+            trocarAba('aba-leitura');
+            alert("✨ Nova licitação iniciada! A tela está 100% limpa para receber os novos PDFs.");
+        }
+
+        // RESET COMPLETO DE VARIÁVEIS (SESSÃO ZERO - NADA HARDCODED)
+        function resetProcessoData() {
+            licitacaoAtual = {
+                id: 'lbtm-' + Date.now(),
+                orgao: '',
+                processo: '',
+                uasg: '',
+                local: '',
+                tetoTotal: 0,
+                vigencia: '12 Meses',
+                totalArquivosLidos: 0,
+                totalPaginasLidas: 0,
+                itens: [], // Tabela 100% vazia!
+                camposDinamicos: [
+                    { chave: 'Dados Bancários p/ Crédito', valor: 'Banco do Brasil | Ag: 0000-0 | C/C: 00000-0', ativo: true },
+                    { chave: 'Responsável Técnico / CREA', valor: 'Reg. CREA-SP nº XXXXXXXXXX', ativo: true }
+                ]
+            };
+
+            // Reset do input de arquivo
             const pdfInput = document.getElementById('pdf-input');
             if (pdfInput) pdfInput.value = '';
 
-            // Resetar barra de progresso e status
+            // Reset barra de progresso e auditoria
             const statusLeitura = document.getElementById('status-leitura');
             if (statusLeitura) statusLeitura.classList.add('hidden');
             const barraProgresso = document.getElementById('barra-progresso');
             if (barraProgresso) barraProgresso.style.width = '0%';
             const porcentagemStatus = document.getElementById('porcentagem-status');
             if (porcentagemStatus) porcentagemStatus.innerText = '0%';
-            
-            // Exibir card de auditoria padrão
             const cardAuditoria = document.getElementById('card-confirmacao-auditoria');
-            if (cardAuditoria) cardAuditoria.classList.remove('hidden');
-            const txtAuditoria = document.getElementById('texto-auditoria-detalhe');
-            if (txtAuditoria) {
-                txtAuditoria.innerHTML = `<strong>1</strong> arquivo carregado | <strong>38</strong> páginas analisadas | <strong>100%</strong> do conteúdo verificado.`;
-            }
+            if (cardAuditoria) cardAuditoria.classList.add('hidden');
 
             atualizarCamposUI();
             renderizarTabelaItens();
+            carregarCamposDinamicosPerfilUI();
             atualizarCalculos();
-
-            if (confirmar) {
-                trocarAba('aba-leitura');
-            }
         }
 
-        // ATUALIZAR INTERFACE COM OS DADOS BÁSICOS
+        // ==========================================
+        // EXPORTAÇÃO E IMPORTAÇÃO FÍSICA (.LBTM)
+        // ==========================================
+        function exportarArquivoLBTM() {
+            atualizarCalculos();
+            const pacote = {
+                versao: '2.0',
+                tipo: 'lbtm-licitacao',
+                dataExportacao: new Date().toISOString(),
+                licitacao: licitacaoAtual
+            };
+            const nomeArq = `LBTM_${limparNomeArquivo(licitacaoAtual.orgao || 'Edital')}_${limparNomeArquivo(licitacaoAtual.processo || 'Processo')}.lbtm`;
+            baixarJSONBlob(pacote, nomeArq);
+        }
+
+        function importarArquivoLBTM(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const dados = JSON.parse(e.target.result);
+                    const lic = dados.licitacao || dados;
+                    if (!lic || (!lic.orgao && !lic.itens)) {
+                        throw new Error("Arquivo .lbtm inválido ou corrompido.");
+                    }
+                    carregarObjetoLicitacao(lic);
+                    salvarLicitacaoNaGaveta(false); // Salva na gaveta para histórico
+                    trocarAba('aba-leitura');
+                    alert(`📤 Licitação "${licitacaoAtual.orgao || 'Importada'}" carregada com sucesso!`);
+                } catch(err) {
+                    alert("Erro ao importar arquivo .lbtm: " + err.message);
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function baixarJSONBlob(obj, nomeArquivo) {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(obj, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", nomeArquivo);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function limparNomeArquivo(str) {
+            return (str || '').replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 30);
+        }
+
+        // ==========================================
+        // ATUALIZAR INTERFACE
+        // ==========================================
         function atualizarCamposUI() {
             document.getElementById('info-orgao').value = licitacaoAtual.orgao;
             document.getElementById('info-processo').value = licitacaoAtual.processo;
             document.getElementById('info-uasg').value = licitacaoAtual.uasg;
             document.getElementById('info-local').value = licitacaoAtual.local;
-            document.getElementById('info-teto').value = licitacaoAtual.tetoTotal;
+            document.getElementById('info-teto').value = licitacaoAtual.tetoTotal || '';
             document.getElementById('info-vigencia').value = licitacaoAtual.vigencia;
 
             const tetoFmt = document.getElementById('info-teto-formatado');
-            if (tetoFmt) tetoFmt.innerText = 'Valor Formatado: ' + formatarMoeda(licitacaoAtual.tetoTotal);
+            if (tetoFmt) {
+                tetoFmt.innerText = licitacaoAtual.tetoTotal > 0 ? 'Valor Formatado: ' + formatarMoeda(licitacaoAtual.tetoTotal) : '';
+            }
         }
 
-        // LEITURA DE PDFS COM BARRA DE PROGRESSO DINÂMICA (0% a 100%) E AUDITORIA DE PÁGINAS
+        // ==========================================
+        // LEITURA DE PDFS COM PDF.JS E RESET AUTOMÁTICO
+        // ==========================================
         async function processarPDFs(event) {
             const files = event.target.files;
             if (!files.length) return;
+
+            // 1ª LINHA OBRIGATÓRIA: Limpeza TOTAL do processo anterior!
+            resetProcessoData();
 
             const status = document.getElementById('status-leitura');
             const textoStatus = document.getElementById('texto-status');
@@ -855,12 +1200,19 @@
                 // REGEX DETECTORES
                 if (textoCompleto.includes("CAPITANIA") || textoCompleto.includes("MARINHA")) {
                     licitacaoAtual.orgao = "Capitania Fluvial do Tietê-Paraná (Marinha do Brasil)";
+                } else {
+                    const matchOrgao = textoCompleto.match(/(?:Prefeitura|Secretaria|Pol[ií]cia|Universidade|Tribunal|Minist[eé]rio|C[aâ]mara)[^\n\r,\.]+/i);
+                    if (matchOrgao) licitacaoAtual.orgao = matchOrgao[0].trim();
                 }
+
                 const matchUasg = textoCompleto.match(/UASG[:\s]+(\d+)/i);
                 if (matchUasg) licitacaoAtual.uasg = matchUasg[1];
 
                 const matchProcesso = textoCompleto.match(/Processo[:\s]+([\d\.\/\-]+)/i);
                 if (matchProcesso) licitacaoAtual.processo = "Processo nº " + matchProcesso[1];
+
+                const matchDispensa = textoCompleto.match(/(?:Dispensa|Preg[aã]o|Concorr[eê]ncia)[^\n\r,\.]+/i);
+                if (matchDispensa && !licitacaoAtual.processo) licitacaoAtual.processo = matchDispensa[0].trim();
 
                 atualizarCamposUI();
                 atualizarCalculos();
@@ -885,11 +1237,25 @@
             }
         }
 
+        // ==========================================
         // RENDERIZAR TABELA DE ITENS
+        // ==========================================
         function renderizarTabelaItens() {
             const corpo = document.getElementById('corpo-tabela-itens');
             if (!corpo) return;
             corpo.innerHTML = '';
+
+            if (licitacaoAtual.itens.length === 0) {
+                corpo.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="p-6 text-center text-gray-500 text-xs">
+                            Nenhum item cadastrado nesta licitação.<br>
+                            Clique em <strong>+ Adicionar Item Manualmente</strong> acima para começar a cotar.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
 
             licitacaoAtual.itens.forEach((it, idx) => {
                 const subtotal = (it.qtd * it.precoUnit) || 0;
@@ -971,7 +1337,9 @@
             if (vigEl) licitacaoAtual.vigencia = vigEl.value;
 
             const tetoFmt = document.getElementById('info-teto-formatado');
-            if (tetoFmt) tetoFmt.innerText = 'Valor Formatado: ' + formatarMoeda(licitacaoAtual.tetoTotal);
+            if (tetoFmt) {
+                tetoFmt.innerText = licitacaoAtual.tetoTotal > 0 ? 'Valor Formatado: ' + formatarMoeda(licitacaoAtual.tetoTotal) : '';
+            }
 
             let totalProposto = 0;
             let totalTetoCalculado = 0;
@@ -1015,20 +1383,28 @@
             }
         }
 
+        // ==========================================
         // GERAR E COPIAR RESUMO EXECUTIVO WHATSAPP
+        // ==========================================
         function exportarRelatorioWhatsapp() {
             let totalProposto = 0;
             let totalTeto = licitacaoAtual.tetoTotal || 0;
 
             let itensTexto = '';
-            licitacaoAtual.itens.forEach(it => {
-                const sub = (it.qtd * it.precoUnit) || 0;
-                totalProposto += sub;
-                itensTexto += `🔹 *Item ${it.item}:* ${it.desc} | Qtd: ${it.qtd} | *${formatarMoeda(it.precoUnit)}* (Total: ${formatarMoeda(sub)})\n`;
-            });
+            if (licitacaoAtual.itens.length === 0) {
+                itensTexto = '⚠️ Nenhum item cotado nesta licitação.\n';
+            } else {
+                licitacaoAtual.itens.forEach(it => {
+                    const sub = (it.qtd * it.precoUnit) || 0;
+                    totalProposto += sub;
+                    itensTexto += `🔹 *Item ${it.item}:* ${it.desc} | Qtd: ${it.qtd} | *${formatarMoeda(it.precoUnit)}* (Total: ${formatarMoeda(sub)})\n`;
+                });
+            }
 
             const desconto = totalTeto > 0 ? ((totalTeto - totalProposto) / totalTeto) * 100 : 0;
-            const arqInfo = `${licitacaoAtual.totalArquivosLidos || 1} arquivo(s) lido(s) (${licitacaoAtual.totalPaginasLidas || 38} páginas analisadas)`;
+            const arqInfo = licitacaoAtual.totalPaginasLidas > 0 
+                ? `${licitacaoAtual.totalArquivosLidos || 1} arquivo(s) lido(s) (${licitacaoAtual.totalPaginasLidas} páginas analisadas)`
+                : 'Entrada Direta / Manual';
 
             const msg = 
 `📊 *RELATÓRIO EXECUTIVO - LICITAÇÃO LBTM*
@@ -1071,7 +1447,9 @@ ${itensTexto}
             });
         }
 
-        // RENDERIZAR PROPOSTA A4 (FORMATADA COM RECUO LATERAL E SEM 'R$' NAS CÉLULAS INDIVIDUAIS)
+        // ==========================================
+        // RENDERIZAR PROPOSTA A4
+        // ==========================================
         function renderizarPropostaA4() {
             const razao = document.getElementById('perfil-razao').value;
             const cnpj = document.getElementById('perfil-cnpj').value;
@@ -1141,21 +1519,31 @@ ${itensTexto}
             corpo.innerHTML = '';
             let total = 0;
 
-            licitacaoAtual.itens.forEach(it => {
-                const sub = (it.qtd * it.precoUnit) || 0;
-                total += sub;
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-gray-300";
-                tr.innerHTML = `
-                    <td class="p-1 border border-gray-300 font-bold text-center">${it.item}</td>
-                    <td class="p-1 border border-gray-300">${it.desc}</td>
-                    <td class="p-1 border border-gray-300 text-center">${it.qtd}</td>
-                    <td class="p-1 border border-gray-300">${it.marca}</td>
-                    <td class="p-1 border border-gray-300 text-right">${formatarNumeroBR(it.precoUnit)}</td>
-                    <td class="p-1 border border-gray-300 text-right font-bold">${formatarNumeroBR(sub)}</td>
+            if (licitacaoAtual.itens.length === 0) {
+                corpo.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="p-3 text-center text-gray-500 border border-gray-300">
+                            Nenhum item cotado nesta proposta.
+                        </td>
+                    </tr>
                 `;
-                corpo.appendChild(tr);
-            });
+            } else {
+                licitacaoAtual.itens.forEach(it => {
+                    const sub = (it.qtd * it.precoUnit) || 0;
+                    total += sub;
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-gray-300";
+                    tr.innerHTML = `
+                        <td class="p-1 border border-gray-300 font-bold text-center">${it.item}</td>
+                        <td class="p-1 border border-gray-300">${it.desc}</td>
+                        <td class="p-1 border border-gray-300 text-center">${it.qtd}</td>
+                        <td class="p-1 border border-gray-300">${it.marca}</td>
+                        <td class="p-1 border border-gray-300 text-right">${formatarNumeroBR(it.precoUnit)}</td>
+                        <td class="p-1 border border-gray-300 text-right font-bold">${formatarNumeroBR(sub)}</td>
+                    `;
+                    corpo.appendChild(tr);
+                });
+            }
 
             document.getElementById('a4-valor-total').innerText = formatarMoeda(total);
 
@@ -1173,7 +1561,9 @@ ${itensTexto}
             atualizarLogosUI();
         }
 
-        // RENDERIZAR E IMPRIMIR RELATÓRIO EXECUTIVO EM PDF
+        // ==========================================
+        // RENDERIZAR RELATÓRIO EXECUTIVO EM PDF
+        // ==========================================
         function renderizarRelatorioExecutivoPDF() {
             atualizarCalculos();
 
@@ -1183,7 +1573,9 @@ ${itensTexto}
             document.getElementById('exec-local').innerText = licitacaoAtual.local || 'N/A';
             document.getElementById('exec-vigencia').innerText = licitacaoAtual.vigencia || '12 Meses';
 
-            const arqInfo = `${licitacaoAtual.totalArquivosLidos || 1} arquivo(s) lido(s) (${licitacaoAtual.totalPaginasLidas || 38} páginas)`;
+            const arqInfo = licitacaoAtual.totalPaginasLidas > 0 
+                ? `${licitacaoAtual.totalArquivosLidos || 1} arquivo(s) lido(s) (${licitacaoAtual.totalPaginasLidas} páginas)`
+                : 'Entrada Direta / Manual';
             document.getElementById('exec-auditoria-status').innerText = arqInfo;
 
             const hoje = new Date();
@@ -1195,21 +1587,31 @@ ${itensTexto}
             const corpo = document.getElementById('exec-tabela-corpo');
             corpo.innerHTML = '';
 
-            licitacaoAtual.itens.forEach(it => {
-                const sub = (it.qtd * it.precoUnit) || 0;
-                totalProposto += sub;
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-gray-300";
-                tr.innerHTML = `
-                    <td class="p-1 border border-gray-300 text-center font-bold">${it.item}</td>
-                    <td class="p-1 border border-gray-300">${it.desc}</td>
-                    <td class="p-1 border border-gray-300 text-center">${it.qtd}</td>
-                    <td class="p-1 border border-gray-300 text-right">${formatarNumeroBR(it.tetoUnit)}</td>
-                    <td class="p-1 border border-gray-300 text-right">${formatarNumeroBR(it.precoUnit)}</td>
-                    <td class="p-1 border border-gray-300 text-right font-bold">${formatarNumeroBR(sub)}</td>
+            if (licitacaoAtual.itens.length === 0) {
+                corpo.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="p-2 text-center text-gray-500 border border-gray-300">
+                            Nenhum item cotado.
+                        </td>
+                    </tr>
                 `;
-                corpo.appendChild(tr);
-            });
+            } else {
+                licitacaoAtual.itens.forEach(it => {
+                    const sub = (it.qtd * it.precoUnit) || 0;
+                    totalProposto += sub;
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-gray-300";
+                    tr.innerHTML = `
+                        <td class="p-1 border border-gray-300 text-center font-bold">${it.item}</td>
+                        <td class="p-1 border border-gray-300">${it.desc}</td>
+                        <td class="p-1 border border-gray-300 text-center">${it.qtd}</td>
+                        <td class="p-1 border border-gray-300 text-right">${formatarNumeroBR(it.tetoUnit)}</td>
+                        <td class="p-1 border border-gray-300 text-right">${formatarNumeroBR(it.precoUnit)}</td>
+                        <td class="p-1 border border-gray-300 text-right font-bold">${formatarNumeroBR(sub)}</td>
+                    `;
+                    corpo.appendChild(tr);
+                });
+            }
 
             const tetoRef = totalTeto || totalProposto;
             const desconto = tetoRef > 0 ? ((tetoRef - totalProposto) / tetoRef) * 100 : 0;
@@ -1234,7 +1636,9 @@ ${itensTexto}
             atualizarLogosUI();
         }
 
+        // ==========================================
         // DISPARADORES DE IMPRESSÃO
+        // ==========================================
         function imprimirProposta() {
             renderizarPropostaA4();
             document.body.classList.remove('imprimindo-executivo');
@@ -1252,7 +1656,9 @@ ${itensTexto}
             }, 300);
         }
 
-        // CAMPOS DINÂMICOS PERFIL UI (COM CHECKBOX EXIBIR NO A4)
+        // ==========================================
+        // CAMPOS DINÂMICOS PERFIL UI
+        // ==========================================
         function carregarCamposDinamicosPerfilUI() {
             const container = document.getElementById('container-campos-dinamicos');
             if (!container) return;
@@ -1288,7 +1694,9 @@ ${itensTexto}
             renderizarPropostaA4();
         }
 
+        // ==========================================
         // GERENCIAMENTO DE LOGOMARCA & LOCALSTORAGE
+        // ==========================================
         function carregarLogo(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1377,8 +1785,7 @@ ${itensTexto}
                 showEndereco: document.getElementById('toggle-a4-endereco').checked,
                 showTelefone: document.getElementById('toggle-a4-telefone').checked,
                 showEmail: document.getElementById('toggle-a4-email').checked,
-                showInscricoes: document.getElementById('toggle-a4-inscricoes').checked,
-                camposDinamicos: licitacaoAtual.camposDinamicos
+                showInscricoes: document.getElementById('toggle-a4-inscricoes').checked
             };
             localStorage.setItem('lbtm_perfil', JSON.stringify(perfil));
         }
@@ -1402,10 +1809,6 @@ ${itensTexto}
                 if (p.showTelefone !== undefined) document.getElementById('toggle-a4-telefone').checked = p.showTelefone;
                 if (p.showEmail !== undefined) document.getElementById('toggle-a4-email').checked = p.showEmail;
                 if (p.showInscricoes !== undefined) document.getElementById('toggle-a4-inscricoes').checked = p.showInscricoes;
-
-                if (p.camposDinamicos && Array.isArray(p.camposDinamicos)) {
-                    licitacaoAtual.camposDinamicos = p.camposDinamicos;
-                }
             } catch(e) {
                 console.error("Erro ao carregar perfil do localStorage:", e);
             }
