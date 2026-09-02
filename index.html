@@ -1415,6 +1415,21 @@ na PONTA B e na PONTA C.
 
         // SALVAR LICITAÇÃO ATUAL NA GAVETA (MODO ACUMULATIVO SEM SOBRESCRITA INDEVIDA)
         function salvarLicitacaoNaGaveta(notificar = true) {
+            // 1. Sincroniza campos dos inputs diretamente da tela ativa
+            const orgaoInput = document.getElementById('info-orgao');
+            const procInput = document.getElementById('info-processo');
+            const uasgInput = document.getElementById('info-uasg');
+            const localInput = document.getElementById('info-local');
+            const tetoInput = document.getElementById('info-teto');
+            const vigInput = document.getElementById('info-vigencia');
+
+            if (orgaoInput) licitacaoAtual.orgao = orgaoInput.value.trim();
+            if (procInput) licitacaoAtual.processo = procInput.value.trim();
+            if (uasgInput) licitacaoAtual.uasg = uasgInput.value.trim();
+            if (localInput) licitacaoAtual.local = localInput.value.trim();
+            if (tetoInput) licitacaoAtual.tetoTotal = tratarNumeroInput(tetoInput.value);
+            if (vigInput) licitacaoAtual.vigencia = vigInput.value.trim();
+
             atualizarCalculos();
 
             let gaveta = carregarGavetaStorage();
@@ -1433,18 +1448,17 @@ na PONTA B e na PONTA C.
             }
 
             // Identificar se a licitação na tela já corresponde a uma salva na gaveta
-            // Só atualiza em vez de criar se o órgão e processo coincidirem com o registro gravado
             let indexExistente = -1;
             
             if (licitacaoAtual.id) {
                 indexExistente = gaveta.findIndex(item => item.id === licitacaoAtual.id);
-                // Se encontrou pelo ID, mas o órgão ou processo mudaram (ex: carregou USP em cima de Capitania), trata como NOVA licitação!
+                // Se o órgão ou processo mudaram em relação ao item salvo, cria um novo card (ex: digitou USP)
                 if (indexExistente >= 0) {
                     const itemExistente = gaveta[indexExistente];
                     const orgaoMudou = (orgao !== 'Sem Órgão' && itemExistente.orgao !== 'Sem Órgão' && itemExistente.orgao !== orgao);
                     const processoMudou = (processo !== 'Sem Processo' && itemExistente.processo !== 'Sem Processo' && itemExistente.processo !== processo);
                     if (orgaoMudou || processoMudou) {
-                        indexExistente = -1; // Não sobrescreve! Cria novo registro!
+                        indexExistente = -1; // Não sobrescreve! Cria novo registro com novo ID!
                         licitacaoAtual.id = 'lbtm-' + Date.now();
                     }
                 }
@@ -1452,7 +1466,7 @@ na PONTA B e na PONTA C.
                 licitacaoAtual.id = 'lbtm-' + Date.now();
             }
 
-            // Se não encontrou por ID, verifica se já existe uma licitação com o mesmo (órgão + processo)
+            // Se não encontrou por ID, verifica se já existe uma com o mesmo órgão e processo
             if (indexExistente < 0 && orgao !== 'Sem Órgão' && processo !== 'Sem Processo') {
                 indexExistente = gaveta.findIndex(item => item.orgao === orgao && item.processo === processo);
             }
@@ -1460,9 +1474,11 @@ na PONTA B e na PONTA C.
             const idSalvo = (indexExistente >= 0) ? gaveta[indexExistente].id : (licitacaoAtual.id || ('lbtm-' + Date.now()));
             licitacaoAtual.id = idSalvo;
 
+            const tituloReal = `${orgao} — ${processo}`;
+
             const novaLicitacao = {
                 id: idSalvo,
-                titulo: `${orgao} — ${processo}`,
+                titulo: tituloReal,
                 orgao: orgao,
                 processo: processo,
                 uasg: uasg,
@@ -1489,9 +1505,10 @@ na PONTA B e na PONTA C.
             }
 
             salvarGavetaStorage(gaveta);
+            salvarLicitacaoAuto(false);
 
             if (notificar) {
-                alert(`💾 Licitação "${novaLicitacao.titulo}" salva com sucesso na Gaveta! Total salvo: ${gaveta.length} licitação(ões).`);
+                alert(`💾 Licitação "${tituloReal}" salva com sucesso na Gaveta! Total salvo: ${gaveta.length} licitação(ões).`);
             }
         }
 
@@ -1648,9 +1665,15 @@ na PONTA B e na PONTA C.
         // ==========================================
         // FLUXO DO BOTÃO "➕ NOVO" & LIMPEZA DE ESTADO
         // ==========================================
+        function novoEdital() {
+            iniciarNovaLicitacaoComPergunta();
+        }
+
         function iniciarNovaLicitacaoComPergunta() {
-            // Pergunta preventiva de salvamento
-            const temDados = (licitacaoAtual.orgao && licitacaoAtual.orgao.trim()) || (licitacaoAtual.itens && licitacaoAtual.itens.length > 0);
+            // Pergunta preventiva de salvamento se houver dados na tela
+            const orgaoVal = document.getElementById('info-orgao') ? document.getElementById('info-orgao').value.trim() : '';
+            const temDados = (orgaoVal !== '' && orgaoVal !== 'Sem Órgão') || (licitacaoAtual.itens && licitacaoAtual.itens.length > 0);
+            
             if (temDados) {
                 if (confirm("Deseja salvar a licitação atual na Gaveta antes de iniciar uma nova?")) {
                     salvarLicitacaoNaGaveta(false);
@@ -1658,9 +1681,14 @@ na PONTA B e na PONTA C.
             }
 
             // Limpeza total de memória e variáveis
-            resetProcessoData();
+            resetProcessoData(true);
+            try {
+                localStorage.removeItem(AUTOSAVE_RECOVERY_KEY);
+            } catch(e) {}
+
             trocarAba('aba-leitura');
-            alert("✨ Nova licitação iniciada! A tela está 100% limpa para receber os novos PDFs.");
+            atualizarStatusAutoSave("Tela Limpa");
+            alert("✨ Tela limpa. Pronta para análise de um novo edital.");
         }
 
         // RESET COMPLETO DE VARIÁVEIS (SESSÃO ZERO - NADA HARDCODED)
@@ -1675,45 +1703,17 @@ na PONTA B e na PONTA C.
                 vigencia: '12 Meses',
                 totalArquivosLidos: 0,
                 totalPaginasLidas: 0,
-                itens: [], // Tabela 100% vazia!
+                itens: [], // Tabela 100% vazia
                 riscos: {
-                    vermelho: [
-                        "<strong>Atestado de Capacidade Técnica:</strong> Exige comprovação de no mínimo 1 ano em serviços equivalentes.",
-                        "<strong>Vedação de Subcontratação:</strong> Proibida a execução por terceiros não registrados.",
-                        "<strong>Prazo do Sistema:</strong> Apenas 3 horas para envio da documentação no Compras.gov.br após arrematar."
-                    ],
-                    amarelo: [
-                        "<strong>Regra de Sustentabilidade:</strong> Recolhimento obrigatório de fluidos/gás e logística reversa de óleos/peças velhas.",
-                        "<strong>Omissão de BTUs:</strong> Verificar capacidades não descritas antes do lance.",
-                        "<strong>Validade da Proposta:</strong> Mínimo de 60 dias corridos."
-                    ],
-                    verde: [
-                        "Cartão CNPJ + CND Federal / INSS",
-                        "CND Estadual + CND Municipal em dia",
-                        "CRF FGTS + CNDT Trabalhista",
-                        "Balanço Patrimonial / Certidão Negativa de Falência"
-                    ]
+                    vermelho: [],
+                    amarelo: [],
+                    verde: []
                 },
                 requisitosTecnicos: {
-                    nrs: [
-                        { texto: "Equipe técnica qualificada com certificação NR-10 e NR-35", pagina: 1 },
-                        { texto: "Execução dos serviços em conformidade com PMOC (Lei 13.589/2018)", pagina: 1 },
-                        { texto: "Uso obrigatório de EPIs adequados com CA válido (NR-06)", pagina: 1 }
-                    ],
-                    gases: [
-                        { texto: "Gás Refrigerante Ecológico R-32 / R-410A de baixo GWP", pagina: 1 },
-                        { texto: "Recolhimento obrigatório e vedação de expurgo no meio ambiente", pagina: 1 },
-                        { texto: "Procedimento de vácuo técnico (< 500 microns) antes da recarga", pagina: 1 }
-                    ],
-                    materiais: [
-                        { texto: "Tubulação e Serpentina 100% Cobre de parede a parede", pagina: 1 },
-                        { texto: "Inverter Classificação A INMETRO / Selo Procel A", pagina: 1 },
-                        { texto: "Controle de ruído acústico e limite máximo de dB", pagina: 1 }
-                    ],
-                    alertas: [
-                        { texto: "Obrigatório recolhimento de fluido refrigerante com recolhedora e vácuo adequado.", pagina: 1 },
-                        { texto: "Técnicos com certificação NR-10 e NR-35 ativa para serviços em altura e elétrica.", pagina: 1 }
-                    ]
+                    nrs: [],
+                    gases: [],
+                    materiais: [],
+                    alertas: []
                 },
                 camposDinamicos: [
                     { chave: 'Dados Bancários p/ Crédito', valor: 'Banco do Brasil | Ag: 0000-0 | C/C: 00000-0', ativo: true },
@@ -1721,17 +1721,30 @@ na PONTA B e na PONTA C.
                 ]
             };
 
-            // Reset do input de arquivo apenas se explicitamente solicitado
+            // Reset do input de arquivo
             if (limparInput) {
                 const pdfInput = document.getElementById('pdf-input');
                 if (pdfInput) pdfInput.value = '';
             }
 
-            atualizarCamposUI();
-            renderizarTabelaItens();
-            renderizarRiscosUI(licitacaoAtual.riscos);
-            renderizarRequisitosTecnicosUI(licitacaoAtual.requisitosTecnicos);
-            atualizarCalculos();
+            // Limpar explicitamente inputs no DOM
+            const orgaoEl = document.getElementById('info-orgao');
+            if (orgaoEl) orgaoEl.value = '';
+            const procEl = document.getElementById('info-processo');
+            if (procEl) procEl.value = '';
+            const uasgEl = document.getElementById('info-uasg');
+            if (uasgEl) uasgEl.value = '';
+            const localEl = document.getElementById('info-local');
+            if (localEl) localEl.value = '';
+            const tetoEl = document.getElementById('info-teto');
+            if (tetoEl) tetoEl.value = '';
+            const vigEl = document.getElementById('info-vigencia');
+            if (vigEl) vigEl.value = '12 Meses';
+
+            const tetoFmt = document.getElementById('info-teto-formatado');
+            if (tetoFmt) tetoFmt.innerText = '';
+            const inputDesc = document.getElementById('input-desconto-geral');
+            if (inputDesc) inputDesc.value = '0.00';
 
             // Reset barra de progresso, auditoria e alerta de tabela
             const statusLeitura = document.getElementById('status-leitura');
@@ -1747,7 +1760,10 @@ na PONTA B e na PONTA C.
 
             atualizarCamposUI();
             renderizarTabelaItens();
-            renderizarRiscosUI();
+            renderizarRiscosUI(licitacaoAtual.riscos);
+            renderizarRequisitosTecnicosUI(licitacaoAtual.requisitosTecnicos);
+            renderizarPropostaA4();
+            renderizarRelatorioExecutivoPDF();
             carregarCamposDinamicosPerfilUI();
             atualizarCalculos();
         }
