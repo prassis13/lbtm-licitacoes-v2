@@ -33,23 +33,25 @@
         body { background-color: #0b0f17; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
         .tab-btn.active { border-bottom: 3px solid #10b981; color: #10b981; font-weight: bold; }
         
-        /* REGRAS DE IMPRESSÃO A4 (210mm x 297mm) COM MARGENS DE 15mm */
+        /* REGRAS DE IMPRESSÃO A4 COM RECUO LATERAL GENEROSO (PADRÃO OFICIAL ABNT) */
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 15mm;
+                margin: 15mm 20mm 15mm 20mm; /* 20mm nas laterais esquerda e direita */
             }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             
             html, body {
                 background: white !important;
-                color: black !important;
+                color: #111827 !important;
                 width: 100% !important;
                 height: auto !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                font-size: 10.5pt;
+                font-size: 10pt;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             
             main {
@@ -72,15 +74,17 @@
             
             #folha-proposta-a4, #folha-executivo-a4 {
                 width: 100% !important;
-                max-width: 100% !important;
+                max-width: 175mm !important; /* Garante área útil centralizada e recuo das bordas */
+                box-sizing: border-box !important;
                 box-shadow: none !important;
-                padding: 0 !important;
+                padding: 6mm 10mm !important; /* Recuo interno fixo de segurança nas margens esquerda e direita */
                 margin: 0 auto !important;
                 border: none !important;
             }
             
-            table { page-break-inside: auto; width: 100% !important; }
+            table { page-break-inside: auto; width: 100% !important; border-collapse: collapse !important; }
             tr { page-break-inside: avoid; page-break-after: auto; }
+            th, td { padding: 4px 6px !important; }
             thead { display: table-header-group; }
             tfoot { display: table-footer-group; }
         }
@@ -465,57 +469,57 @@
                 </button>
             </div>
 
-            <!-- DOCUMENTO A4 -->
-            <div id="folha-proposta-a4" class="bg-white text-black p-8 rounded shadow-2xl max-w-4xl mx-auto space-y-6 text-xs border border-gray-200">
+            <!-- DOCUMENTO A4 COM RECUO LATERAL E MARGENS PERFEITAS -->
+            <div id="folha-proposta-a4" class="bg-white text-gray-900 p-8 md:p-12 rounded shadow-2xl max-w-4xl mx-auto space-y-6 text-xs border border-gray-200">
                 
                 <!-- CABEÇALHO PROPOSTA -->
                 <div class="border-b-2 border-gray-800 pb-4 flex justify-between items-center gap-4">
                     <div class="flex items-center space-x-4">
-                        <div id="a4-logo-container" class="hidden">
-                            <img id="a4-logo-img" src="" alt="LBTM" class="max-h-16 max-w-[140px] object-contain">
+                        <div id="a4-logo-container" class="hidden flex-shrink-0">
+                            <img id="a4-logo-img" src="" alt="LBTM" class="max-h-16 max-w-[130px] object-contain">
                         </div>
                         <div>
-                            <h1 class="text-base font-bold uppercase tracking-wider text-gray-900" id="a4-razao">LBTM INSTALACAO MANUTENCAO E REFORMA LTDA</h1>
-                            <p id="a4-cnpj" class="text-gray-700">CNPJ: 51.278.693/0001-10</p>
+                            <h1 class="text-base font-bold uppercase tracking-wider text-gray-900 leading-tight" id="a4-razao">LBTM INSTALACAO MANUTENCAO E REFORMA LTDA</h1>
+                            <p id="a4-cnpj" class="text-gray-700 font-medium">CNPJ: 51.278.693/0001-10</p>
                             <p id="a4-inscricoes" class="text-gray-700"></p>
                             <p id="a4-endereco" class="text-gray-700"></p>
                             <p id="a4-contato" class="text-gray-700">Contato: contato@lbtm.com.br</p>
                         </div>
                     </div>
-                    <div class="text-right whitespace-nowrap">
-                        <span class="text-sm font-bold block text-gray-900">PROPOSTA COMERCIAL</span>
-                        <span class="text-gray-600 block" id="a4-data-hoje">Data: 01/09/2026</span>
+                    <div class="text-right whitespace-nowrap pl-4">
+                        <span class="text-sm font-bold block text-gray-900 uppercase">PROPOSTA COMERCIAL</span>
+                        <span class="text-gray-600 block text-xs mt-0.5" id="a4-data-hoje">Data: 01/09/2026</span>
                     </div>
                 </div>
 
                 <!-- DESTINATÁRIO -->
-                <div class="bg-gray-100 p-3 rounded space-y-1">
+                <div class="bg-gray-100 p-3.5 rounded space-y-1 text-xs border border-gray-200">
                     <p><strong>AO:</strong> <span id="a4-orgao">Capitania Fluvial do Tietê-Paraná</span></p>
                     <p><strong>PROCESSO / MODALIDADE:</strong> <span id="a4-processo">Dispensa Eletrônica nº 32/2026</span> | <strong>UASG:</strong> <span id="a4-uasg">789320</span></p>
                     <p><strong>LOCALIDADE:</strong> <span id="a4-local">Barra Bonita - SP</span> | <strong>VIGÊNCIA:</strong> <span id="a4-vigencia">12 Meses</span></p>
                 </div>
 
-                <!-- TABELA PROPOSTA A4 (SEM 'R$' REPETITIVO NAS CÉLULAS) -->
+                <!-- TABELA PROPOSTA A4 (COM FORMATO PADRÃO E SEM 'R$' REPETITIVO NAS CÉLULAS) -->
                 <div>
-                    <h3 class="font-bold border-b border-gray-400 pb-1 mb-2 text-gray-900">PLANILHA DE PREÇOS PROPOSTOS</h3>
-                    <table class="w-full text-left border-collapse border border-gray-300">
+                    <h3 class="font-bold border-b border-gray-400 pb-1 mb-2 text-gray-900 text-xs uppercase tracking-wide">PLANILHA DE PREÇOS PROPOSTOS</h3>
+                    <table class="w-full text-left border-collapse border border-gray-300 text-xs">
                         <thead>
-                            <tr class="bg-gray-200 text-gray-800 border-b border-gray-300">
-                                <th class="p-1 border border-gray-300 text-center w-10">Item</th>
-                                <th class="p-1 border border-gray-300">Descrição do Serviço / Fornecimento</th>
-                                <th class="p-1 border border-gray-300 w-12 text-center">Qtd</th>
-                                <th class="p-1 border border-gray-300 w-24">Marca</th>
-                                <th class="p-1 border border-gray-300 w-24 text-right">Unit. (R$)</th>
-                                <th class="p-1 border border-gray-300 w-28 text-right">Total (R$)</th>
+                            <tr class="bg-gray-100 text-gray-800 border-b border-gray-300">
+                                <th class="p-1.5 border border-gray-300 text-center w-10">Item</th>
+                                <th class="p-1.5 border border-gray-300">Descrição do Serviço / Fornecimento</th>
+                                <th class="p-1.5 border border-gray-300 w-12 text-center">Qtd</th>
+                                <th class="p-1.5 border border-gray-300 w-28">Marca</th>
+                                <th class="p-1.5 border border-gray-300 w-24 text-right">Unit. (R$)</th>
+                                <th class="p-1.5 border border-gray-300 w-28 text-right">Total (R$)</th>
                             </tr>
                         </thead>
                         <tbody id="a4-tabela-corpo">
                             <!-- Preenchido via JS com formatarNumeroBR() -->
                         </tbody>
                         <tfoot>
-                            <tr class="font-bold bg-gray-100 text-gray-900">
+                            <tr class="font-bold bg-gray-50 text-gray-900">
                                 <td colspan="5" class="p-2 text-right border border-gray-300">VALOR TOTAL DA PROPOSTA:</td>
-                                <td id="a4-valor-total" class="p-2 text-right border border-gray-300 text-sm">R$ 0,00</td>
+                                <td id="a4-valor-total" class="p-2 text-right border border-gray-300 text-sm font-bold">R$ 0,00</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -534,7 +538,7 @@
                 </div>
 
                 <!-- ASSINATURA CENTRALIZADA -->
-                <div class="pt-8 text-center flex flex-col items-center justify-center">
+                <div class="pt-8 pb-4 text-center flex flex-col items-center justify-center">
                     <div class="w-80 border-t border-gray-800 mb-2"></div>
                     <p class="font-bold text-gray-900 text-xs" id="a4-assinatura-socio">Leandro Barbieri</p>
                     <p class="text-gray-600 text-[11px]" id="a4-assinatura-cpf">Representante Legal</p>
@@ -553,12 +557,12 @@
                 </button>
             </div>
 
-            <div id="folha-executivo-a4" class="bg-white text-black p-8 rounded shadow-2xl max-w-4xl mx-auto space-y-5 text-xs border border-gray-200">
+            <div id="folha-executivo-a4" class="bg-white text-gray-900 p-8 md:p-12 rounded shadow-2xl max-w-4xl mx-auto space-y-5 text-xs border border-gray-200">
                 
                 <!-- CABEÇALHO RELATÓRIO EXECUTIVO -->
                 <div class="border-b-2 border-emerald-600 pb-3 flex justify-between items-center gap-4">
                     <div class="flex items-center space-x-3">
-                        <div id="exec-logo-container" class="hidden">
+                        <div id="exec-logo-container" class="hidden flex-shrink-0">
                             <img id="exec-logo-img" src="" alt="LBTM" class="max-h-14 max-w-[120px] object-contain">
                         </div>
                         <div>
@@ -573,13 +577,13 @@
 
                 <!-- DADOS DO PROCESSO & RESUMO FINANCEIRO -->
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-gray-100 p-3 rounded space-y-1">
+                    <div class="bg-gray-100 p-3 rounded space-y-1 border border-gray-200">
                         <p><strong>ÓRGÃO:</strong> <span id="exec-orgao">Capitania Fluvial do Tietê-Paraná</span></p>
                         <p><strong>PROCESSO:</strong> <span id="exec-processo">Dispensa nº 32/2026</span> | <strong>UASG:</strong> <span id="exec-uasg">789320</span></p>
                         <p><strong>LOCAL:</strong> <span id="exec-local">Barra Bonita - SP</span> | <strong>VIGÊNCIA:</strong> <span id="exec-vigencia">12 Meses</span></p>
                         <p><strong>AUDITORIA PDF:</strong> <span id="exec-auditoria-status">1 arquivo lido (38 páginas)</span></p>
                     </div>
-                    <div class="bg-gray-100 p-3 rounded space-y-1">
+                    <div class="bg-gray-100 p-3 rounded space-y-1 border border-gray-200">
                         <p><strong>TETO GOVERNO:</strong> <span id="exec-teto" class="font-bold text-gray-900">R$ 0,00</span></p>
                         <p><strong>PROPOSTA LBTM:</strong> <span id="exec-proposto" class="font-bold text-emerald-700">R$ 0,00</span></p>
                         <p><strong>MARGEM / DESCONTO:</strong> <span id="exec-desconto" class="font-bold">0.00%</span> (<span id="exec-status-trava">Proposta Exequível</span>)</p>
@@ -623,22 +627,22 @@
                     <h3 class="font-bold text-xs uppercase border-b border-gray-300 pb-1 mb-2 text-gray-800">📦 Resumo da Composição de Preços</h3>
                     <table class="w-full text-left border-collapse border border-gray-300 text-[11px]">
                         <thead>
-                            <tr class="bg-gray-200 text-gray-800">
-                                <th class="p-1 border border-gray-300 text-center w-8">Item</th>
-                                <th class="p-1 border border-gray-300">Descrição</th>
-                                <th class="p-1 border border-gray-300 text-center w-10">Qtd</th>
-                                <th class="p-1 border border-gray-300 text-right w-24">Teto Unit. (R$)</th>
-                                <th class="p-1 border border-gray-300 text-right w-24">LBTM Unit. (R$)</th>
-                                <th class="p-1 border border-gray-300 text-right w-28">LBTM Total (R$)</th>
+                            <tr class="bg-gray-100 text-gray-800">
+                                <th class="p-1.5 border border-gray-300 text-center w-8">Item</th>
+                                <th class="p-1.5 border border-gray-300">Descrição</th>
+                                <th class="p-1.5 border border-gray-300 text-center w-10">Qtd</th>
+                                <th class="p-1.5 border border-gray-300 text-right w-24">Teto Unit. (R$)</th>
+                                <th class="p-1.5 border border-gray-300 text-right w-24">LBTM Unit. (R$)</th>
+                                <th class="p-1.5 border border-gray-300 text-right w-28">LBTM Total (R$)</th>
                             </tr>
                         </thead>
                         <tbody id="exec-tabela-corpo">
                             <!-- Preenchido via JS com formatarNumeroBR() -->
                         </tbody>
                         <tfoot>
-                            <tr class="font-bold bg-gray-100">
+                            <tr class="font-bold bg-gray-50">
                                 <td colspan="5" class="p-1.5 text-right border border-gray-300">TOTAL PROPOSTA LBTM:</td>
-                                <td id="exec-total-geral" class="p-1.5 text-right border border-gray-300 text-emerald-800">R$ 0,00</td>
+                                <td id="exec-total-geral" class="p-1.5 text-right border border-gray-300 text-emerald-800 font-bold">R$ 0,00</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -1054,7 +1058,7 @@ ${itensTexto}
             });
         }
 
-        // RENDERIZAR PROPOSTA A4 (FORMATADA SEM 'R$' NAS CÉLULAS INDIVIDUAIS)
+        // RENDERIZAR PROPOSTA A4 (FORMATADA COM RECUO LATERAL E SEM 'R$' NAS CÉLULAS INDIVIDUAIS)
         function renderizarPropostaA4() {
             const razao = document.getElementById('perfil-razao').value;
             const cnpj = document.getElementById('perfil-cnpj').value;
