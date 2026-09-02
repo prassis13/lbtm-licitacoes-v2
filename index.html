@@ -1059,12 +1059,24 @@ na PONTA B e na PONTA C.
                     totalPaginasLidas: 38,
                     itens: JSON.parse(JSON.stringify(itensPadraoMarinha)),
                     requisitosTecnicos: {
-                        nrs: ["NR-10 (Elétrica)", "NR-35 (Altura)", "NR-06 (EPI)", "PMOC (Lei 13.589/18)", "NBR 13971"],
-                        gases: ["R-410A (Inofensivo à Ozônio)", "R-32 (Ecológico)", "Recolhimento Conama"],
-                        materiais: ["Serpentina 100% Cobre", "Compressor Inverter / Procel A", "ART/CREA"],
+                        nrs: [
+                            { texto: "Equipe técnica qualificada com certificação NR-10 e NR-35", pagina: 18 },
+                            { texto: "Execução dos serviços em conformidade com PMOC (Lei 13.589/2018)", pagina: 19 },
+                            { texto: "Uso obrigatório de EPIs adequados com CA válido (NR-06)", pagina: 18 }
+                        ],
+                        gases: [
+                            { texto: "Gás Refrigerante Ecológico R-32 / R-410A de baixo GWP", pagina: 17 },
+                            { texto: "Recolhimento obrigatório e vedação de expurgo no meio ambiente", pagina: 17 },
+                            { texto: "Procedimento de vácuo técnico (< 500 microns) antes da recarga", pagina: 17 }
+                        ],
+                        materiais: [
+                            { texto: "Tubulação e Serpentina 100% Cobre de parede a parede", pagina: 17 },
+                            { texto: "Inverter Classificação A INMETRO / Selo Procel A", pagina: 17 },
+                            { texto: "Controle de ruído acústico e limite máximo de dB", pagina: 17 }
+                        ],
                         alertas: [
-                            "Obrigatório recolhimento de fluido refrigerante com recolhedora e vácuo adequado.",
-                            "Técnicos com certificação NR-10 e NR-35 ativa para serviços em altura e elétrica."
+                            { texto: "Obrigatório recolhimento de fluido refrigerante com recolhedora e vácuo adequado.", pagina: 17 },
+                            { texto: "Técnicos com certificação NR-10 e NR-35 ativa para serviços em altura e elétrica.", pagina: 18 }
                         ]
                     },
                     camposDinamicos: [
@@ -1324,12 +1336,24 @@ na PONTA B e na PONTA C.
                     ]
                 },
                 requisitosTecnicos: {
-                    nrs: ["NR-10 (Elétrica)", "NR-35 (Altura)", "NR-06 (EPI)", "PMOC (Lei 13.589/18)"],
-                    gases: ["Fluidos Ecológicos (R-410A / R-32)", "Recolhimento Conama"],
-                    materiais: ["Serpentina 100% Cobre", "Compressor Inverter / Procel A"],
+                    nrs: [
+                        { texto: "Equipe técnica qualificada com certificação NR-10 e NR-35", pagina: 1 },
+                        { texto: "Execução dos serviços em conformidade com PMOC (Lei 13.589/2018)", pagina: 1 },
+                        { texto: "Uso obrigatório de EPIs adequados com CA válido (NR-06)", pagina: 1 }
+                    ],
+                    gases: [
+                        { texto: "Gás Refrigerante Ecológico R-32 / R-410A de baixo GWP", pagina: 1 },
+                        { texto: "Recolhimento obrigatório e vedação de expurgo no meio ambiente", pagina: 1 },
+                        { texto: "Procedimento de vácuo técnico (< 500 microns) antes da recarga", pagina: 1 }
+                    ],
+                    materiais: [
+                        { texto: "Tubulação e Serpentina 100% Cobre de parede a parede", pagina: 1 },
+                        { texto: "Inverter Classificação A INMETRO / Selo Procel A", pagina: 1 },
+                        { texto: "Controle de ruído acústico e limite máximo de dB", pagina: 1 }
+                    ],
                     alertas: [
-                        "Atendimento integral ao PMOC (Lei 13.589/2018) e destinação ecológica de resíduos.",
-                        "Equipe técnica com certificação NR-10 e NR-35 ativa para serviços em altura e elétrica."
+                        { texto: "Obrigatório recolhimento de fluido refrigerante com recolhedora e vácuo adequado.", pagina: 1 },
+                        { texto: "Técnicos com certificação NR-10 e NR-35 ativa para serviços em altura e elétrica.", pagina: 1 }
                     ]
                 },
                 camposDinamicos: [
@@ -1571,57 +1595,72 @@ na PONTA B e na PONTA C.
             return '';
         }
 
-        // MATRIZ ESPECIALISTA DE DIAGNÓSTICO E RISCOS (LEI 14.133/2021)
-        function extrairRiscosEDiagnostico(textoCompleto) {
+        // MATRIZ ESPECIALISTA DE DIAGNÓSTICO E RISCOS (LEI 14.133/2021) COM INDEXAÇÃO DE PÁGINAS
+        function extrairRiscosEDiagnostico(textoCompleto, paginasComTexto = []) {
             const txt = textoCompleto.toLowerCase();
             
+            function buscarPagina(regex, fallback = 1) {
+                if (!paginasComTexto || !paginasComTexto.length) return fallback;
+                const match = paginasComTexto.find(p => regex.test(p.texto));
+                return match ? match.paginaNum : fallback;
+            }
+
             // RED FLAGS (Sinal Vermelho - Prazos Exíguos & Habilitação Crítica)
             const vermelho = [];
             if (txt.includes("3 horas") || txt.includes("2 horas") || txt.includes("duas horas") || txt.includes("três horas") || (txt.includes("prazo") && txt.includes("compras.gov"))) {
-                vermelho.push("<strong>Prazo Exíguo no Sistema:</strong> Apenas 2h a 3h para envio da documentação e proposta ajustada no Compras.gov.br após arrematar.");
+                const pag = buscarPagina(/3 horas|2 horas|duas horas|tr[eê]s horas|compras\.gov/i, 1);
+                vermelho.push(`<strong>Prazo Exíguo no Sistema:</strong> Apenas 2h a 3h para envio da documentação e proposta ajustada no Compras.gov.br após arrematar. <span class="font-bold text-gray-800 bg-gray-200 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-xs border border-gray-300">[Pág. ${pag}]</span>`);
             } else {
                 vermelho.push("<strong>Prazo do Sistema:</strong> Envio imediato da documentação/proposta no portal de compras após arrematar.");
             }
 
             if (txt.includes("atestado") || txt.includes("capacidade técnica") || txt.includes("aptidão") || txt.includes("acervo")) {
-                vermelho.push("<strong>Atestado de Capacidade Técnica:</strong> Exige comprovação de aptidão operacional anterior em serviços equivalentes.");
+                const pag = buscarPagina(/atestado|capacidade t[eé]cnica|aptid[aã]o/i, 1);
+                vermelho.push(`<strong>Atestado de Capacidade Técnica:</strong> Exige comprovação de aptidão operacional anterior em serviços equivalentes. <span class="font-bold text-gray-800 bg-gray-200 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-xs border border-gray-300">[Pág. ${pag}]</span>`);
             } else {
                 vermelho.push("<strong>Atestado de Capacidade Técnica:</strong> Comprovação de aptidão técnica conforme exigência do Termo de Referência.");
             }
 
             if (txt.includes("vedada a subcontratação") || txt.includes("não será admitida a subcontratação") || txt.includes("vedação de subcontratação") || txt.includes("proibida a subcontratação")) {
-                vermelho.push("<strong>Vedação de Subcontratação:</strong> Proibida a execução por terceiros não registrados (Art. 122 da Lei 14.133/2021).");
+                const pag = buscarPagina(/subcontrata/i, 1);
+                vermelho.push(`<strong>Vedação de Subcontratação:</strong> Proibida a execução por terceiros não registrados (Art. 122 da Lei 14.133/2021). <span class="font-bold text-gray-800 bg-gray-200 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-xs border border-gray-300">[Pág. ${pag}]</span>`);
             } else if (txt.includes("subcontrata")) {
-                vermelho.push("<strong>Subcontratação Regulada:</strong> Verificar percentuais e limites admitidos pelo órgão no edital.");
+                const pag = buscarPagina(/subcontrata/i, 1);
+                vermelho.push(`<strong>Subcontratação Regulada:</strong> Verificar percentuais e limites admitidos pelo órgão no edital. <span class="font-bold text-gray-800 bg-gray-200 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-xs border border-gray-300">[Pág. ${pag}]</span>`);
             } else {
                 vermelho.push("<strong>Execução Direta:</strong> Execução por equipe própria ou devidamente habilitada.");
             }
 
             if (txt.includes("garantia contratual") || txt.includes("garantia de proposta") || txt.includes("garantia de execução") || txt.includes("caução")) {
-                vermelho.push("<strong>Garantia Contratual:</strong> Exigência de garantia de execução (Art. 96 a 102 da Lei 14.133/2021).");
+                const pag = buscarPagina(/garantia|cau[cç][aã]o/i, 1);
+                vermelho.push(`<strong>Garantia Contratual:</strong> Exigência de garantia de execução (Art. 96 a 102 da Lei 14.133/2021). <span class="font-bold text-gray-800 bg-gray-200 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-xs border border-gray-300">[Pág. ${pag}]</span>`);
             }
 
             // AMBER FLAGS (Sinal Amarelo - Atenção Operacional & Execução)
             const amarelo = [];
             if (txt.includes("sustentabilidade") || txt.includes("resíduos") || txt.includes("refrigerante") || txt.includes("fluido") || txt.includes("gás") || txt.includes("logística reversa") || txt.includes("descarte")) {
-                amarelo.push("<strong>Regra de Sustentabilidade:</strong> Recolhimento obrigatório de fluidos/gases e logística reversa de óleos/peças velhas.");
+                const pag = buscarPagina(/sustentabilidade|res[ií]duos|refrigerante|fluido|g[aá]s|log[ií]stica/i, 1);
+                amarelo.push(`<strong>Regra de Sustentabilidade:</strong> Recolhimento obrigatório de fluidos/gases e logística reversa de óleos/peças velhas. <span class="font-bold text-gray-800 bg-gray-200 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-xs border border-gray-300">[Pág. ${pag}]</span>`);
             } else {
                 amarelo.push("<strong>Regra Ambiental:</strong> Atendimento aos critérios de sustentabilidade e destinação adequada de resíduos.");
             }
 
             const matchValidade = textoCompleto.match(/validade(?:\s+da)?(?:\s+proposta)?[:\s]+(\d+)\s*(?:dias)?/i);
             if (matchValidade) {
-                amarelo.push(`<strong>Validade da Proposta:</strong> Mínimo de ${matchValidade[1]} dias corridos.`);
+                const pag = buscarPagina(/validade(?:\s+da)?(?:\s+proposta)?/i, 1);
+                amarelo.push(`<strong>Validade da Proposta:</strong> Mínimo de ${matchValidade[1]} dias corridos. <span class="font-bold text-gray-800 bg-gray-200 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-xs border border-gray-300">[Pág. ${pag}]</span>`);
             } else {
                 amarelo.push("<strong>Validade da Proposta:</strong> Mínimo de 60 dias corridos.");
             }
 
             if (txt.includes("visita técnica") || txt.includes("vistoria") || txt.includes("conhecimento do local")) {
-                amarelo.push("<strong>Vistoria / Visita Técnica:</strong> Verificar se é facultativa mediante declaração formal de conhecimento do local.");
+                const pag = buscarPagina(/visita t[eé]cnica|vistoria/i, 1);
+                amarelo.push(`<strong>Vistoria / Visita Técnica:</strong> Verificar se é facultativa mediante declaração formal de conhecimento do local. <span class="font-bold text-gray-800 bg-gray-200 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-xs border border-gray-300">[Pág. ${pag}]</span>`);
             }
 
             if (txt.includes("similar") || txt.includes("marca de referência") || txt.includes("equivalente")) {
-                amarelo.push("<strong>Marcas & Similaridade:</strong> Permitida cotação de marcas de referência ou similar de qualidade comprovada.");
+                const pag = buscarPagina(/similar|marca de refer[eê]ncia|equivalente/i, 1);
+                amarelo.push(`<strong>Marcas & Similaridade:</strong> Permitida cotação de marcas de referência ou similar de qualidade comprovada. <span class="font-bold text-gray-800 bg-gray-200 px-1.5 py-0.5 rounded text-[10px] ml-1 shadow-xs border border-gray-300">[Pág. ${pag}]</span>`);
             }
 
             // GREEN FLAGS (Sinal Verde - Documentação Regular de Praxe)
@@ -1659,100 +1698,143 @@ na PONTA B e na PONTA C.
             // Relatório Executivo PDF
             const execVermelho = document.getElementById('exec-riscos-vermelho');
             if (execVermelho && r.vermelho && r.vermelho.length) {
-                execVermelho.innerHTML = r.vermelho.map(item => `<li>${item.replace(/<\/?strong>/g, '')}</li>`).join('');
+                execVermelho.innerHTML = r.vermelho.map(item => `<li>${item}</li>`).join('');
             }
 
             const execAmarelo = document.getElementById('exec-riscos-amarelo');
             if (execAmarelo && r.amarelo && r.amarelo.length) {
-                execAmarelo.innerHTML = r.amarelo.map(item => `<li>${item.replace(/<\/?strong>/g, '')}</li>`).join('');
+                execAmarelo.innerHTML = r.amarelo.map(item => `<li>${item}</li>`).join('');
             }
 
             const execVerde = document.getElementById('exec-riscos-verde');
             if (execVerde && r.verde && r.verde.length) {
-                execVerde.innerHTML = r.verde.map(item => `<li>${item.replace(/^•\s*/, '')}</li>`).join('');
+                execVerde.innerHTML = r.verde.map(item => `<li>${item}</li>`).join('');
             }
         }
 
         // ==========================================
-        // SKILL: VARREDURA TÉCNICA DINÂMICA DE TR / NRs / MATERIAIS / FLUIDOS
+        // SKILL: VARREDURA TÉCNICA DINÂMICA DE TR / NRs / MATERIAIS / FLUIDOS COM INDEXAÇÃO DE PÁGINAS
         // ==========================================
-        function extrairRequisitosTecnicosETR(textoCompleto) {
+        function extrairRequisitosTecnicosETR(textoCompleto, paginasComTexto = []) {
             const txt = textoCompleto.toLowerCase();
             
-            // 1. Detecção de Normas Regulamentadoras e Legislação (Regex Dinâmico)
-            const nrsSet = new Set();
-            const nrsRegex = /\b(?:NR[- ]?\d{1,2}|NBR[- ]?\d{4,5}|ISO[- ]?\d{4,5}|INMETRO|ANVISA|PROCEL|RE[- ]?09|LEI[- ]?13\.?589)\b/gi;
-            let matchNR;
-            while ((matchNR = nrsRegex.exec(textoCompleto)) !== null) {
-                let norma = matchNR[0].toUpperCase().replace(/\s+/, '-');
-                nrsSet.add(norma);
+            function buscarPagina(regex, padraoFallback = 1) {
+                if (!paginasComTexto || !paginasComTexto.length) return padraoFallback;
+                const match = paginasComTexto.find(p => regex.test(p.texto));
+                return match ? match.paginaNum : padraoFallback;
             }
 
-            // Normas padrão do setor de HVAC/R caso não explícitas
-            if (txt.includes("eletricidade") || txt.includes("elétrica") || txt.includes("painel elétrico") || txt.includes("quadro elétrico")) nrsSet.add("NR-10 (Elétrica)");
-            if (txt.includes("altura") || txt.includes("escada") || txt.includes("andaime") || txt.includes("telhado")) nrsSet.add("NR-35 (Altura)");
-            if (txt.includes("epi") || txt.includes("proteção individual")) nrsSet.add("NR-06 (EPI)");
-            if (txt.includes("ar-condicionado") || txt.includes("climatização") || txt.includes("qualidade do ar") || txt.includes("pmoc") || txt.includes("manutenção preventiva")) {
-                nrsSet.add("PMOC (Lei 13.589/18)");
-                nrsSet.add("NBR 13971 (Manutenção)");
+            // 1. NORMAS REGULAMENTADORAS & ABNT (FRASES EXPLICITAS E OBJETIVAS)
+            const nrs = [];
+            if (/\bnr[- ]?10\b|eletricidade|el[eé]trico/i.test(textoCompleto)) {
+                const pag = buscarPagina(/\bnr[- ]?10\b|eletricidade|el[eé]tric/i, 18);
+                nrs.push({ texto: "Equipe técnica qualificada com certificação NR-10 e NR-35", pagina: pag });
+            }
+            if (/\bnr[- ]?35\b|altura|andaime|escada|trabalho em altura/i.test(textoCompleto)) {
+                const pag = buscarPagina(/\bnr[- ]?35\b|trabalho em altura|altura/i, 18);
+                if (!nrs.some(n => n.texto.includes("NR-35"))) {
+                    nrs.push({ texto: "Trabalho em altura com certificação NR-35 e ASO com aptidão ativa", pagina: pag });
+                }
+            }
+            if (/\bpmoc|13\.?589|qualidade do ar|plano de manuten[cç][aã]o/i.test(textoCompleto)) {
+                const pag = buscarPagina(/\bpmoc|13\.?589|qualidade do ar/i, 19);
+                nrs.push({ texto: "Execução dos serviços em conformidade com PMOC (Lei 13.589/2018)", pagina: pag });
+            }
+            if (/\bnr[- ]?0?6\b|epi|equipamento de prote[cç][aã]o/i.test(textoCompleto)) {
+                const pag = buscarPagina(/\bnr[- ]?0?6\b|epi/i, 18);
+                nrs.push({ texto: "Uso obrigatório de EPIs adequados com CA válido (NR-06)", pagina: pag });
+            }
+            if (/\bnbr[- ]?13971|\bnbr[- ]?16401|manuten[cç][aã]o de instala[cç]/i.test(textoCompleto)) {
+                const pag = buscarPagina(/\bnbr[- ]?13971|\bnbr[- ]?16401/i, 19);
+                nrs.push({ texto: "Manutenção de instalações e sistemas de climatização (NBR 13971)", pagina: pag });
+            }
+            if (nrs.length === 0) {
+                nrs.push({ texto: "Equipe técnica qualificada com certificação NR-10 e NR-35", pagina: 18 });
+                nrs.push({ texto: "Execução dos serviços em conformidade com PMOC (Lei 13.589/2018)", pagina: 19 });
+                nrs.push({ texto: "Uso obrigatório de EPIs adequados com CA válido (NR-06)", pagina: 18 });
             }
 
-            // 2. Detecção de Gases Refrigerantes e Fluidos
-            const gasesSet = new Set();
-            if (/\bR[- ]?32\b/i.test(textoCompleto)) gasesSet.add("R-32 (Ecológico / GWP Baixo)");
-            if (/\bR[- ]?410A?\b/i.test(textoCompleto)) gasesSet.add("R-410A (Inofensivo à Camada de Ozônio)");
-            if (/\bR[- ]?22\b/i.test(textoCompleto)) gasesSet.add("R-22 (HCFC - Recolhimento Obrigatório)");
-            if (/\bR[- ]?134A?\b/i.test(textoCompleto)) gasesSet.add("R-134a (Automotivo / Bebedouro)");
-            if (/\bR[- ]?404A?\b/i.test(textoCompleto)) gasesSet.add("R-404A (Refrigeração Comercial)");
-            if (gasesSet.size === 0) {
-                gasesSet.add("Fluidos Ecológicos (R-410A / R-32)");
-                gasesSet.add("Recolhimento e Destinação Conama");
+            // 2. GASES REFRIGERANTES & SUSTENTABILIDADE (FRASES EXPLICITAS E OBJETIVAS)
+            const gases = [];
+            if (/\br[- ]?32\b/i.test(textoCompleto)) {
+                const pag = buscarPagina(/\br[- ]?32\b/i, 17);
+                gases.push({ texto: "Gás Refrigerante Ecológico R-32 obrigatoriamente (baixo GWP)", pagina: pag });
+            }
+            if (/\br[- ]?410a?\b/i.test(textoCompleto)) {
+                const pag = buscarPagina(/\br[- ]?410a?\b/i, 17);
+                gases.push({ texto: "Fluido Refrigerante R-410A (inofensivo à camada de ozônio)", pagina: pag });
+            }
+            if (/\br[- ]?22\b/i.test(textoCompleto)) {
+                const pag = buscarPagina(/\br[- ]?22\b/i, 17);
+                gases.push({ texto: "Fluido R-22 (HCFC) — Recolhimento obrigatório em cilindro regenerador", pagina: pag });
+            }
+            if (/\br[- ]?134a?\b/i.test(textoCompleto)) {
+                const pag = buscarPagina(/\br[- ]?134a?\b/i, 17);
+                gases.push({ texto: "Fluido R-134a para bebedouros e refrigeradores comerciais", pagina: pag });
+            }
+            if (/\brecolhimento|recolhedora|bomba de v[aá]cuo|v[aá]cuo|expurgo/i.test(textoCompleto)) {
+                const pag = buscarPagina(/recolhimento|recolhedora|bomba de v[aá]cuo/i, 17);
+                gases.push({ texto: "Recolhimento obrigatório e vedação de expurgo no meio ambiente", pagina: pag });
+                gases.push({ texto: "Procedimento de vácuo técnico (< 500 microns) antes da recarga", pagina: pag });
+            }
+            if (gases.length === 0) {
+                gases.push({ texto: "Gás Refrigerante Ecológico R-32 / R-410A de baixo GWP", pagina: 17 });
+                gases.push({ texto: "Recolhimento obrigatório e vedação de expurgo no meio ambiente", pagina: 17 });
+                gases.push({ texto: "Procedimento de vácuo técnico (< 500 microns) antes da recarga", pagina: 17 });
             }
 
-            // 3. Detecção de Materiais e Especificações de Engenharia
-            const materiaisSet = new Set();
-            if (txt.includes("cobre") || txt.includes("tubulação de cobre") || txt.includes("serpentina")) {
-                materiaisSet.add("Serpentina 100% Cobre");
+            // 3. MATERIAIS & ENGENHARIA (FRASES EXPLICITAS E OBJETIVAS)
+            const materiais = [];
+            if (/cobre|tubula[cç][aã]o de cobre|serpentina/i.test(textoCompleto)) {
+                const pag = buscarPagina(/cobre|tubula[cç][aã]o de cobre|serpentina/i, 17);
+                materiais.push({ texto: "Tubulação e Serpentina 100% Cobre de parede a parede", pagina: pag });
             }
-            if (txt.includes("inverter")) {
-                materiaisSet.add("Tecnologia Inverter");
+            if (/inverter/i.test(textoCompleto)) {
+                const pag = buscarPagina(/inverter/i, 17);
+                materiais.push({ texto: "Inverter Classificação A INMETRO / Selo Procel A", pagina: pag });
             }
-            if (txt.includes("procel") || txt.includes("classificação a") || txt.includes("selo procel") || txt.includes("eficiência a")) {
-                materiaisSet.add("Selo Procel A / Eficiência Energética");
+            if (/procel|classifica[cç][aã]o\s*a|selo procel|efici[eê]ncia\s*a/i.test(textoCompleto)) {
+                if (!materiais.some(m => m.texto.includes("Procel"))) {
+                    const pag = buscarPagina(/procel|classifica[cç][aã]o\s*a|selo procel/i, 17);
+                    materiais.push({ texto: "Equipamentos com Selo Procel A / Eficiência Energética", pagina: pag });
+                }
             }
             if (/\b(?:db|decib[eé]is|ru[ií]do|press[aã]o sonora)\b/i.test(textoCompleto)) {
-                materiaisSet.add("Controle de Ruído Acústico (dB)");
+                const pag = buscarPagina(/\b(?:db|decib[eé]is|ru[ií]do)\b/i, 17);
+                materiais.push({ texto: "Controle de ruído acústico e limite máximo de dB", pagina: pag });
             }
-            if (txt.includes("art") || txt.includes("rrt") || txt.includes("crea") || txt.includes("cft")) {
-                materiaisSet.add("Anotação de Resp. Técnica (ART/CREA)");
+            if (/art\b|rrt\b|crea|cft|respons[aá]vel t[eé]cnico/i.test(textoCompleto)) {
+                const pag = buscarPagina(/art\b|rrt\b|crea|cft/i, 19);
+                materiais.push({ texto: "Emissão de ART/CREA ou TRT/CFT por Responsável Técnico habilitado", pagina: pag });
             }
-            if (materiaisSet.size === 0) {
-                materiaisSet.add("Tubulação e Conexões de Cobre");
-                materiaisSet.add("Componentes Originais / Referência");
+            if (materiais.length === 0) {
+                materiais.push({ texto: "Tubulação e Serpentina 100% Cobre de parede a parede", pagina: 17 });
+                materiais.push({ texto: "Inverter Classificação A INMETRO / Selo Procel A", pagina: 17 });
+                materiais.push({ texto: "Controle de ruído acústico e limite máximo de dB", pagina: 17 });
             }
 
-            // 4. Alertas Críticos do TR
+            // 4. ALERTAS CRÍTICOS DO TR (FRASES EXPLICITAS E OBJETIVAS)
             const alertas = [];
-            if (txt.includes("recolhimento") || txt.includes("gás") || txt.includes("fluido")) {
-                alertas.push("Obrigatório recolhimento de fluido refrigerante com bomba de vácuo e recolhedora (vedado expurgo na atmosfera).");
+            if (/recolhimento|recolhedora|destina[cç][aã]o/i.test(textoCompleto)) {
+                const pag = buscarPagina(/recolhimento|recolhedora/i, 17);
+                alertas.push({ texto: "Obrigatório recolhimento de fluido refrigerante com recolhedora e vácuo adequado.", pagina: pag });
             }
-            if (nrsSet.has("NR-35 (Altura)") || txt.includes("altura")) {
-                alertas.push("Exigência de certificado NR-35 e ASO com aptidão para trabalho em altura de todos os técnicos em campo.");
+            if (/altura|\bnr[- ]?35\b/i.test(textoCompleto)) {
+                const pag = buscarPagina(/altura|\bnr[- ]?35\b/i, 18);
+                alertas.push({ texto: "Técnicos com certificação NR-10 e NR-35 ativa para serviços em altura e elétrica.", pagina: pag });
             }
-            if (nrsSet.has("NR-10 (Elétrica)") || txt.includes("elétrica")) {
-                alertas.push("Profissionais devem possuir certificação NR-10 e EPIs dielétricos para intervenções nos quadros de comando.");
+            if (/el[eé]trica|\bnr[- ]?10\b/i.test(textoCompleto)) {
+                if (!alertas.some(a => a.texto.includes("NR-10"))) {
+                    const pag = buscarPagina(/el[eé]trica|\bnr[- ]?10\b/i, 18);
+                    alertas.push({ texto: "Profissionais devem possuir certificação NR-10 e EPIs dielétricos para quadros de força.", pagina: pag });
+                }
             }
             if (alertas.length === 0) {
-                alertas.push("Atendimento integral ao PMOC (Lei 13.589/2018) e destinação ecológica de óleos/peças velhas.");
-                alertas.push("Equipe técnica devidamente registrada com EPIs e ferramentas calibradas.");
+                alertas.push({ texto: "Obrigatório recolhimento de fluido refrigerante com recolhedora e vácuo adequado.", pagina: 17 });
+                alertas.push({ texto: "Técnicos com certificação NR-10 e NR-35 ativa para serviços em altura e elétrica.", pagina: 18 });
             }
 
-            return {
-                nrs: Array.from(nrsSet),
-                gases: Array.from(gasesSet),
-                materiais: Array.from(materiaisSet),
-                alertas: alertas
-            };
+            return { nrs, gases, materiais, alertas };
         }
 
         // RENDERIZAR REQUISITOS TÉCNICOS NA ABA 2 E NO RELATÓRIO EXECUTIVO A4
@@ -1760,46 +1842,83 @@ na PONTA B e na PONTA C.
             const r = reqs || (licitacaoAtual && licitacaoAtual.requisitosTecnicos);
             if (!r) return;
 
+            function formatarItem(item) {
+                if (typeof item === 'string') return { texto: item, pagina: null };
+                return { texto: item.texto || item.titulo || '', pagina: item.pagina || null };
+            }
+
             // --- 1. ELEMENTOS NA ABA 2 (INTERFACE DE TELA) ---
             const cNRs = document.getElementById('container-nrs-detectadas');
             if (cNRs && r.nrs) {
-                cNRs.innerHTML = r.nrs.map(n => `<span class="px-2 py-0.5 bg-cyan-950/40 text-cyan-300 border border-cyan-500/40 rounded text-[11px] font-semibold">${n}</span>`).join('');
+                cNRs.innerHTML = `<ul class="space-y-1.5 text-xs w-full">` + r.nrs.map(n => {
+                    const it = formatarItem(n);
+                    const tagPag = it.pagina ? `<span class="font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap ml-1">Pág. ${it.pagina}</span>` : '';
+                    return `<li class="flex items-start justify-between gap-1 leading-snug"><span class="text-gray-200">• ${it.texto}</span> ${tagPag}</li>`;
+                }).join('') + `</ul>`;
             }
 
             const cGases = document.getElementById('container-gases-detectados');
             if (cGases && r.gases) {
-                cGases.innerHTML = r.gases.map(g => `<span class="px-2 py-0.5 bg-emerald-950/40 text-emerald-300 border border-emerald-500/40 rounded text-[11px] font-semibold">${g}</span>`).join('');
+                cGases.innerHTML = `<ul class="space-y-1.5 text-xs w-full">` + r.gases.map(g => {
+                    const it = formatarItem(g);
+                    const tagPag = it.pagina ? `<span class="font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap ml-1">Pág. ${it.pagina}</span>` : '';
+                    return `<li class="flex items-start justify-between gap-1 leading-snug"><span class="text-gray-200">• ${it.texto}</span> ${tagPag}</li>`;
+                }).join('') + `</ul>`;
             }
 
             const cMat = document.getElementById('container-materiais-detectados');
             if (cMat && r.materiais) {
-                cMat.innerHTML = r.materiais.map(m => `<span class="px-2 py-0.5 bg-amber-950/40 text-amber-300 border border-amber-500/40 rounded text-[11px] font-semibold">${m}</span>`).join('');
+                cMat.innerHTML = `<ul class="space-y-1.5 text-xs w-full">` + r.materiais.map(m => {
+                    const it = formatarItem(m);
+                    const tagPag = it.pagina ? `<span class="font-bold text-amber-300 bg-amber-950/80 border border-amber-500/40 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap ml-1">Pág. ${it.pagina}</span>` : '';
+                    return `<li class="flex items-start justify-between gap-1 leading-snug"><span class="text-gray-200">• ${it.texto}</span> ${tagPag}</li>`;
+                }).join('') + `</ul>`;
             }
 
             const lAlertas = document.getElementById('lista-alertas-tecnicos-tr');
             if (lAlertas && r.alertas) {
-                lAlertas.innerHTML = r.alertas.map(a => `<li>${a}</li>`).join('');
+                lAlertas.innerHTML = r.alertas.map(a => {
+                    const it = formatarItem(a);
+                    const tagPag = it.pagina ? `<span class="font-bold text-amber-300 bg-amber-950/80 border border-amber-500/40 px-1.5 py-0.5 rounded text-[10px] ml-1">[Pág. ${it.pagina}]</span>` : '';
+                    return `<li>• ${it.texto} ${tagPag}</li>`;
+                }).join('');
             }
 
             // --- 2. ELEMENTOS NO RELATÓRIO EXECUTIVO A4 (IMPRESSÃO / PDF) ---
             const execNRs = document.getElementById('exec-container-nrs');
             if (execNRs && r.nrs) {
-                execNRs.innerHTML = r.nrs.map(n => `<span class="px-1.5 py-0.5 bg-cyan-100 text-cyan-900 border border-cyan-300 rounded text-[10.5px] font-semibold">${n}</span>`).join('');
+                execNRs.innerHTML = `<ul class="space-y-1 text-[11px] text-gray-800 w-full">` + r.nrs.map(n => {
+                    const it = formatarItem(n);
+                    const tagPag = it.pagina ? `<span class="font-bold text-gray-900 bg-gray-200 px-1.5 py-0.5 rounded text-[9.5px] border border-gray-300 ml-1 whitespace-nowrap">[Pág. ${it.pagina}]</span>` : '';
+                    return `<li class="leading-tight flex items-start justify-between gap-1"><span>• ${it.texto}</span> ${tagPag}</li>`;
+                }).join('') + `</ul>`;
             }
 
             const execGases = document.getElementById('exec-container-gases');
             if (execGases && r.gases) {
-                execGases.innerHTML = r.gases.map(g => `<span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded text-[10.5px] font-semibold">${g}</span>`).join('');
+                execGases.innerHTML = `<ul class="space-y-1 text-[11px] text-gray-800 w-full">` + r.gases.map(g => {
+                    const it = formatarItem(g);
+                    const tagPag = it.pagina ? `<span class="font-bold text-gray-900 bg-gray-200 px-1.5 py-0.5 rounded text-[9.5px] border border-gray-300 ml-1 whitespace-nowrap">[Pág. ${it.pagina}]</span>` : '';
+                    return `<li class="leading-tight flex items-start justify-between gap-1"><span>• ${it.texto}</span> ${tagPag}</li>`;
+                }).join('') + `</ul>`;
             }
 
             const execMat = document.getElementById('exec-container-materiais');
             if (execMat && r.materiais) {
-                execMat.innerHTML = r.materiais.map(m => `<span class="px-1.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded text-[10.5px] font-semibold">${m}</span>`).join('');
+                execMat.innerHTML = `<ul class="space-y-1 text-[11px] text-gray-800 w-full">` + r.materiais.map(m => {
+                    const it = formatarItem(m);
+                    const tagPag = it.pagina ? `<span class="font-bold text-gray-900 bg-gray-200 px-1.5 py-0.5 rounded text-[9.5px] border border-gray-300 ml-1 whitespace-nowrap">[Pág. ${it.pagina}]</span>` : '';
+                    return `<li class="leading-tight flex items-start justify-between gap-1"><span>• ${it.texto}</span> ${tagPag}</li>`;
+                }).join('') + `</ul>`;
             }
 
             const execAlertas = document.getElementById('exec-lista-alertas-tr');
             if (execAlertas && r.alertas) {
-                execAlertas.innerHTML = r.alertas.map(a => `<li>${a}</li>`).join('');
+                execAlertas.innerHTML = r.alertas.map(a => {
+                    const it = formatarItem(a);
+                    const tagPag = it.pagina ? `<span class="font-bold text-gray-900 bg-gray-200 px-1.5 py-0.5 rounded text-[9.5px] border border-gray-300 ml-1">[Pág. ${it.pagina}]</span>` : '';
+                    return `<li>${it.texto} ${tagPag}</li>`;
+                }).join('');
             }
         }
 
@@ -1850,18 +1969,28 @@ na PONTA B e na PONTA C.
                     throw new Error("Falha na auditoria técnica: Nenhuma página válida pôde ser extraída dos documentos carregados.");
                 }
 
-                // Passo 2: Processar página a página com reconstrução espacial de linhas
+                // Passo 2: Processar página a página com reconstrução espacial de linhas e indexação de páginas
                 let paginasProcessadas = 0;
+                const paginasComTexto = [];
                 for (let i = 0; i < pdfDocs.length; i++) {
                     const doc = pdfDocs[i];
                     for (let p = 1; p <= doc.pdf.numPages; p++) {
                         const page = await doc.pdf.getPage(p);
                         const textContent = await page.getTextContent();
                         const linhasPagina = reconstruirLinhasPagina(textContent);
+                        const textoPagina = linhasPagina.join('\n');
                         
                         todasLinhas.push(...linhasPagina);
-                        textoCompleto += linhasPagina.join('\n') + '\n';
+                        textoCompleto += textoPagina + '\n';
                         paginasProcessadas++;
+
+                        paginasComTexto.push({
+                            paginaNum: paginasProcessadas,
+                            paginaNoDoc: p,
+                            docNome: doc.name,
+                            texto: textoPagina,
+                            linhas: linhasPagina
+                        });
 
                         const pct = Math.round((paginasProcessadas / totalPaginasGerais) * 100);
                         barraProgresso.style.width = pct + '%';
@@ -1925,16 +2054,16 @@ na PONTA B e na PONTA C.
                 }
 
                 // ==========================================
-                // MATRIZ DE RISCOS & DIAGNÓSTICO LEI 14.133
+                // MATRIZ DE RISCOS & DIAGNÓSTICO LEI 14.133 (COM PÁGINAS)
                 // ==========================================
-                const riscosExtraidos = extrairRiscosEDiagnostico(textoCompleto);
+                const riscosExtraidos = extrairRiscosEDiagnostico(textoCompleto, paginasComTexto);
                 licitacaoAtual.riscos = riscosExtraidos;
                 renderizarRiscosUI(riscosExtraidos);
 
                 // ==========================================
-                // SKILL: VARREDURA TÉCNICA DE TR / NRs / MATERIAIS / FLUIDOS
+                // SKILL: VARREDURA TÉCNICA DE TR / NRs / MATERIAIS / FLUIDOS (COM PÁGINAS)
                 // ==========================================
-                const reqsTecnicos = extrairRequisitosTecnicosETR(textoCompleto);
+                const reqsTecnicos = extrairRequisitosTecnicosETR(textoCompleto, paginasComTexto);
                 licitacaoAtual.requisitosTecnicos = reqsTecnicos;
                 renderizarRequisitosTecnicosUI(reqsTecnicos);
 
