@@ -159,7 +159,12 @@ na PONTA B e na PONTA C.
                     <img id="header-logo-img" src="" alt="LBTM" class="w-full h-full object-contain hidden">
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold text-white leading-tight">Central de Licitações</h1>
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <h1 class="text-lg font-bold text-white leading-tight">Central de Licitações</h1>
+                        <span id="status-autosave" class="text-[11px] text-emerald-400 font-medium px-2.5 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 🟢 Auto-Save Ativo
+                        </span>
+                    </div>
                     <p class="text-xs text-gray-400">Inteligência Estratégica em Editais — Lei nº 14.133/2021</p>
                 </div>
             </div>
@@ -1146,7 +1151,7 @@ na PONTA B e na PONTA C.
             { item: '12', desc: 'Corretiva Geladeiras c/ peças', qtd: 3, tetoUnit: 770.00, marca: 'Original', precoUnit: 770.00 }
         ];
 
-        // INICIALIZAÇÃO DO SISTEMA
+        // INICIALIZAÇÃO DO SISTEMA & AUTO-RECOVERY
         window.addEventListener('DOMContentLoaded', () => {
             carregarPerfilLocalStorage();
             inicializarGavetaComMarinhaDemo();
@@ -1176,15 +1181,38 @@ na PONTA B e na PONTA C.
                 });
             }
 
-            // Carrega o edital ativo ou o primeiro da gaveta
-            const gaveta = carregarGavetaStorage();
-            if (gaveta.length > 0) {
-                carregarObjetoLicitacao(gaveta[0]);
-            } else {
-                resetProcessoData();
+            // AUTO-RECOVERY: Recuperação de Emergência
+            let recuperado = false;
+            try {
+                const recoveryRaw = localStorage.getItem(AUTOSAVE_RECOVERY_KEY);
+                if (recoveryRaw) {
+                    const recObj = JSON.parse(recoveryRaw);
+                    if (recObj && (recObj.orgao || (recObj.itens && recObj.itens.length > 0))) {
+                        carregarObjetoLicitacao(recObj.dadosCompletos || recObj);
+                        recuperado = true;
+                        atualizarStatusAutoSave("Recuperado do Auto-Save");
+                    }
+                }
+            } catch(e) {
+                console.warn("Auto-recovery falhou:", e);
+            }
+
+            if (!recuperado) {
+                const gaveta = carregarGavetaStorage();
+                if (gaveta.length > 0) {
+                    carregarObjetoLicitacao(gaveta[0]);
+                } else {
+                    resetProcessoData();
+                }
+                atualizarStatusAutoSave("Auto-Save Pronto");
             }
 
             atualizarLogosUI();
+
+            // TIMER DE SEGURANÇA (5 MINUTOS / 300.000 ms)
+            setInterval(() => {
+                salvarLicitacaoAuto(false);
+            }, 300000);
         });
 
         // TROCA DE ABAS
@@ -1211,15 +1239,29 @@ na PONTA B e na PONTA C.
             }
         }
 
-        // ==========================================
-        // SISTEMA DE GAVETA & MULTI-LICITAÇÃO (STORAGE)
-        // ==========================================
-        const GAVETA_STORAGE_KEY = 'lbtm_licitacoes_salvas';
+        // =========================================================================
+        // SISTEMA DE GAVETA & MULTI-LICITAÇÃO (STORAGE V2 & AUTO-SAVE PREVENTIVO)
+        // =========================================================================
+        const GAVETA_STORAGE_KEY = 'lbtm_historico_v2';
+        const AUTOSAVE_RECOVERY_KEY = 'lbtm_autosave_recovery';
 
         function carregarGavetaStorage() {
             try {
-                const dados = localStorage.getItem(GAVETA_STORAGE_KEY);
-                return dados ? JSON.parse(dados) : [];
+                let dados = localStorage.getItem(GAVETA_STORAGE_KEY);
+                if (!dados) {
+                    // Fallback / Migração automática transparente das chaves legadas
+                    const fallback = localStorage.getItem('lbtm_licitacoes_salvas') || localStorage.getItem('lbtm_historico');
+                    if (fallback) {
+                        const listaFallback = JSON.parse(fallback);
+                        if (Array.isArray(listaFallback) && listaFallback.length > 0) {
+                            localStorage.setItem(GAVETA_STORAGE_KEY, JSON.stringify(listaFallback));
+                            return listaFallback;
+                        }
+                    }
+                    return [];
+                }
+                const lista = JSON.parse(dados);
+                return Array.isArray(lista) ? lista : [];
             } catch(e) {
                 console.error("Erro ao ler gaveta:", e);
                 return [];
@@ -1231,6 +1273,90 @@ na PONTA B e na PONTA C.
                 localStorage.setItem(GAVETA_STORAGE_KEY, JSON.stringify(lista));
             } catch(e) {
                 console.error("Erro ao salvar gaveta:", e);
+            }
+        }
+
+        // ATUALIZAÇÃO DO STATUS VISUAL DE AUTO-SAVE NO CABEÇALHO
+        function atualizarStatusAutoSave(textoPersonalizado) {
+            const el = document.getElementById('status-autosave');
+            if (!el) return;
+            const agora = new Date();
+            const horaFmt = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const texto = textoPersonalizado || `Salvo aut. às ${horaFmt}`;
+            el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 🟢 ${texto}`;
+        }
+
+        // MOTOR DE AUTO-SAVE INSTANTÂNEO & BACKUP PREVENTIVO
+        let _debounceAutoSave = null;
+        function salvarLicitacaoAuto(debounce = true) {
+            if (debounce) {
+                clearTimeout(_debounceAutoSave);
+                _debounceAutoSave = setTimeout(() => _executarSalvarAuto(), 400);
+            } else {
+                _executarSalvarAuto();
+            }
+        }
+
+        function _executarSalvarAuto() {
+            try {
+                if (!licitacaoAtual) return;
+                
+                // Grava backup completo de recuperação de emergência
+                const estadoBackup = JSON.parse(JSON.stringify(licitacaoAtual));
+                localStorage.setItem(AUTOSAVE_RECOVERY_KEY, JSON.stringify(estadoBackup));
+
+                // Se houver dados do edital, sincroniza também na gaveta sem alertas intrusivos
+                if (licitacaoAtual.orgao || licitacaoAtual.processo || (licitacaoAtual.itens && licitacaoAtual.itens.length > 0)) {
+                    let gaveta = carregarGavetaStorage();
+                    const orgao = (licitacaoAtual.orgao && licitacaoAtual.orgao.trim()) ? licitacaoAtual.orgao.trim() : 'Sem Órgão';
+                    const processo = (licitacaoAtual.processo && licitacaoAtual.processo.trim()) ? licitacaoAtual.processo.trim() : 'Sem Processo';
+                    const agora = new Date();
+                    const dataSalvo = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    let totalProp = 0;
+                    if (licitacaoAtual.itens && licitacaoAtual.itens.length > 0) {
+                        licitacaoAtual.itens.forEach(it => {
+                            totalProp += (Number(it.qtd) * Number(it.precoUnit)) || 0;
+                        });
+                    }
+
+                    const idSalvo = licitacaoAtual.id || ('lbtm-' + Date.now());
+                    licitacaoAtual.id = idSalvo;
+
+                    const registro = {
+                        id: idSalvo,
+                        titulo: `${orgao} — ${processo}`,
+                        orgao: orgao,
+                        processo: processo,
+                        uasg: licitacaoAtual.uasg || '',
+                        local: licitacaoAtual.local || '',
+                        tetoTotal: licitacaoAtual.tetoTotal || 0,
+                        vigencia: licitacaoAtual.vigencia || '12 Meses',
+                        totalProposto: totalProp,
+                        valorTotal: totalProp,
+                        qtdItens: licitacaoAtual.itens ? licitacaoAtual.itens.length : 0,
+                        totalArquivosLidos: licitacaoAtual.totalArquivosLidos || 0,
+                        totalPaginasLidas: licitacaoAtual.totalPaginasLidas || 0,
+                        dataSalvo: dataSalvo,
+                        itens: JSON.parse(JSON.stringify(licitacaoAtual.itens || [])),
+                        riscos: licitacaoAtual.riscos ? JSON.parse(JSON.stringify(licitacaoAtual.riscos)) : undefined,
+                        requisitosTecnicos: licitacaoAtual.requisitosTecnicos ? JSON.parse(JSON.stringify(licitacaoAtual.requisitosTecnicos)) : undefined,
+                        camposDinamicos: JSON.parse(JSON.stringify(licitacaoAtual.camposDinamicos || [])),
+                        dadosCompletos: estadoBackup
+                    };
+
+                    const idx = gaveta.findIndex(g => g.id === idSalvo);
+                    if (idx >= 0) {
+                        gaveta[idx] = registro;
+                    } else if (orgao !== 'Sem Órgão' || processo !== 'Sem Processo') {
+                        gaveta.unshift(registro);
+                    }
+                    salvarGavetaStorage(gaveta);
+                }
+
+                atualizarStatusAutoSave();
+            } catch(e) {
+                console.error("Erro no auto-save:", e);
             }
         }
 
@@ -2486,6 +2612,9 @@ na PONTA B e na PONTA C.
                     statusTrava.innerText = "🟢 Proposta Exequível";
                 }
             }
+
+            // AUTO-SAVE IMEDIATO COM DEBOUNCE
+            salvarLicitacaoAuto(true);
         }
 
         // ==========================================
