@@ -33,11 +33,11 @@
         body { background-color: #0b0f17; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
         .tab-btn.active { border-bottom: 3px solid #10b981; color: #10b981; font-weight: bold; }
         
-        /* REGRAS DE IMPRESSÃO A4 PROPORCIONAIS E FLUIDAS */
+        /* REGRAS DE IMPRESSÃO A4 ENQUADRADAS E PROPORCIONAIS */
         @media print {
             @page {
-                size: A4;
-                margin: 10mm 12mm;
+                size: A4 portrait;
+                margin: 8mm 10mm;
             }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
@@ -49,7 +49,7 @@
                 height: auto !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                font-size: 11px;
+                font-size: 10px !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
@@ -72,7 +72,7 @@
                 display: block !important;
             }
             
-            #folha-proposta-a4, #relatorio-executivo-pdf, #folha-executivo-a4 {
+            #folha-proposta-a4, #folha-executivo-a4, #relatorio-executivo-pdf {
                 width: 100% !important;
                 max-width: 100% !important;
                 margin: 0 !important;
@@ -81,7 +81,8 @@
                 border: none !important;
             }
             
-            table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; }
+            .card, .diagnostic-box { padding: 6px 10px !important; margin-bottom: 6px !important; }
+            table { width: 100% !important; border-collapse: collapse !important; font-size: 9.5px !important; page-break-inside: auto; }
             tr { page-break-inside: avoid; page-break-after: auto; }
             th, td { padding: 4px 6px !important; }
             thead { display: table-header-group; }
@@ -410,10 +411,38 @@
         <!-- ABA 4: PERFIL LBTM & CAMPOS ADICIONAIS -->
         <section id="aba-perfil" class="tab-content hidden space-y-6">
             <div class="bg-lbtm-card border border-lbtm-border rounded-xl p-6 space-y-4">
+                
+                <!-- BARRA SUPERIOR DE GERENCIAMENTO DE PERFIS DE EMPRESA -->
+                <div class="flex flex-wrap justify-between items-center gap-4 bg-lbtm-bg p-4 rounded-xl border border-lbtm-border">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-2xl">🏢</span>
+                        <div>
+                            <label class="text-xs font-bold text-white block">Perfil Ativo da Empresa</label>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <select id="select-perfil-empresa" onchange="trocarPerfilEmpresa(this.value)" class="bg-lbtm-card border border-lbtm-border rounded p-1.5 text-xs text-emerald-400 font-bold focus:outline-none focus:border-emerald-500">
+                                    <!-- Opções dinâmicas -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center flex-wrap gap-2">
+                        <button type="button" onclick="restaurarPerfilPadraoLBTM()" class="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded text-xs font-semibold flex items-center gap-1 transition">
+                            🔄 Restaurar Padrão LBTM
+                        </button>
+                        <button type="button" onclick="salvarComoNovoPerfilEmpresa()" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded text-xs font-semibold flex items-center gap-1 transition">
+                            💾 Salvar Como Novo Perfil
+                        </button>
+                        <button type="button" onclick="excluirPerfilEmpresa()" id="btn-excluir-perfil" class="px-2.5 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 rounded text-xs font-semibold flex items-center gap-1 transition" title="Excluir perfil">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+
                 <div class="flex flex-wrap justify-between items-center gap-4 border-b border-lbtm-border pb-4">
                     <div>
                         <h2 class="text-xl font-bold text-white">Cadastro Completo do Proponente (LBTM)</h2>
-                        <p class="text-xs text-gray-400">Os dados cadastrados abaixo são utilizados para montar a Proposta Comercial A4 e o Relatório Executivo.</p>
+                        <p class="text-xs text-gray-400">Todos os campos abaixo são 100% editáveis e atualizam instantaneamente a Proposta A4 e o Relatório Executivo.</p>
                     </div>
                     
                     <!-- UPLOAD DE LOGOMARCA / TIMBRADO -->
@@ -437,43 +466,43 @@
                     </div>
                 </div>
 
-                <!-- FICHA CADASTRAL AMPLIADA -->
+                <!-- FICHA CADASTRAL TOTALMENTE EDITÁVEL COM ONINPUT REATIVO -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                     <div>
                         <label class="text-gray-400 block mb-1">Razão Social</label>
-                        <input type="text" id="perfil-razao" onchange="salvarPerfilLocalStorage()" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="LBTM INSTALACAO MANUTENCAO E REFORMA LTDA">
+                        <input type="text" id="perfil-razao" oninput="salvarPerfilLocalStorage(); renderizarPropostaA4();" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="LBTM INSTALACAO MANUTENCAO E REFORMA LTDA">
                     </div>
                     <div>
                         <label class="text-gray-400 block mb-1">CNPJ</label>
-                        <input type="text" id="perfil-cnpj" onchange="salvarPerfilLocalStorage()" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="51.278.693/0001-10">
+                        <input type="text" id="perfil-cnpj" oninput="salvarPerfilLocalStorage(); renderizarPropostaA4();" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="51.278.693/0001-10">
                     </div>
                     <div>
                         <label class="text-gray-400 block mb-1">Inscrição Estadual (IE)</label>
-                        <input type="text" id="perfil-ie" onchange="salvarPerfilLocalStorage()" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="Isento">
+                        <input type="text" id="perfil-ie" oninput="salvarPerfilLocalStorage(); renderizarPropostaA4();" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="Isento">
                     </div>
                     <div>
                         <label class="text-gray-400 block mb-1">Inscrição Municipal (IM)</label>
-                        <input type="text" id="perfil-im" onchange="salvarPerfilLocalStorage()" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="12345678">
+                        <input type="text" id="perfil-im" oninput="salvarPerfilLocalStorage(); renderizarPropostaA4();" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="12345678">
                     </div>
                     <div class="md:col-span-2">
                         <label class="text-gray-400 block mb-1">Endereço Completo</label>
-                        <input type="text" id="perfil-endereco" onchange="salvarPerfilLocalStorage()" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="Rua Antônio Prado, 100 - Centro - Barra Bonita - SP, CEP: 17340-000">
+                        <input type="text" id="perfil-endereco" oninput="salvarPerfilLocalStorage(); renderizarPropostaA4();" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="Avenida Dr. Chucri Zaidan, nº 1240, Vila São Francisco, São Paulo - SP, CEP: 04711-130">
                     </div>
                     <div>
                         <label class="text-gray-400 block mb-1">Telefone / WhatsApp</label>
-                        <input type="text" id="perfil-telefone" onchange="salvarPerfilLocalStorage()" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="(14) 99999-9999">
+                        <input type="text" id="perfil-telefone" oninput="salvarPerfilLocalStorage(); renderizarPropostaA4();" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="(11) 95590-6120">
                     </div>
                     <div>
                         <label class="text-gray-400 block mb-1">E-mail de Contato</label>
-                        <input type="email" id="perfil-email" onchange="salvarPerfilLocalStorage()" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="contato@lbtm.com.br">
+                        <input type="email" id="perfil-email" oninput="salvarPerfilLocalStorage(); renderizarPropostaA4();" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="leandrobarbieri5050@gmail.com">
                     </div>
                     <div>
                         <label class="text-gray-400 block mb-1">Sócio Administrador / Representante</label>
-                        <input type="text" id="perfil-socio" onchange="salvarPerfilLocalStorage()" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="Leandro Barbieri">
+                        <input type="text" id="perfil-socio" oninput="salvarPerfilLocalStorage(); renderizarPropostaA4();" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="Leandro Barbieri">
                     </div>
                     <div>
                         <label class="text-gray-400 block mb-1">CPF do Representante</label>
-                        <input type="text" id="perfil-cpf-socio" onchange="salvarPerfilLocalStorage()" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="000.000.000-00">
+                        <input type="text" id="perfil-cpf-socio" oninput="salvarPerfilLocalStorage(); renderizarPropostaA4();" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-2 text-white" value="000.000.000-00">
                     </div>
                 </div>
 
@@ -830,7 +859,10 @@
 
             if (idAba === 'aba-proposta') renderizarPropostaA4();
             if (idAba === 'aba-diagnostico') atualizarCalculos();
-            if (idAba === 'aba-perfil') carregarCamposDinamicosPerfilUI();
+            if (idAba === 'aba-perfil') {
+                renderizarSelectPerfis();
+                carregarCamposDinamicosPerfilUI();
+            }
         }
 
         // ==========================================
@@ -2128,9 +2160,174 @@ ${itensTexto}
             }
         }
 
+        // ==========================================
+        // GERENCIAMENTO DE PERFIS DE EMPRESA & LOCALSTORAGE
+        // ==========================================
+        const PERFIL_PADRAO_LBTM = {
+            id: 'lbtm-oficial',
+            nomePerfil: 'LBTM Oficial (São Paulo)',
+            razao: 'LBTM INSTALACAO MANUTENCAO E REFORMA LTDA',
+            cnpj: '51.278.693/0001-10',
+            ie: 'Isento',
+            im: '12345678',
+            endereco: 'Avenida Dr. Chucri Zaidan, nº 1240, Vila São Francisco, São Paulo - SP, CEP: 04711-130',
+            telefone: '(11) 95590-6120',
+            email: 'leandrobarbieri5050@gmail.com',
+            socio: 'Leandro Barbieri',
+            cpfSocio: '000.000.000-00',
+            showEndereco: true,
+            showTelefone: true,
+            showEmail: true,
+            showInscricoes: true
+        };
+
+        const PERFIS_LISTA_STORAGE_KEY = 'lbtm_perfis_lista';
+        const PERFIL_ATIVO_ID_KEY = 'lbtm_perfil_ativo_id';
+
+        function obterListaPerfisStorage() {
+            try {
+                const dados = localStorage.getItem(PERFIS_LISTA_STORAGE_KEY);
+                let lista = dados ? JSON.parse(dados) : [];
+                if (!lista || lista.length === 0) {
+                    lista = [JSON.parse(JSON.stringify(PERFIL_PADRAO_LBTM))];
+                    salvarListaPerfisStorage(lista);
+                }
+                return lista;
+            } catch(e) {
+                return [JSON.parse(JSON.stringify(PERFIL_PADRAO_LBTM))];
+            }
+        }
+
+        function salvarListaPerfisStorage(lista) {
+            try {
+                localStorage.setItem(PERFIS_LISTA_STORAGE_KEY, JSON.stringify(lista));
+            } catch(e) {
+                console.error("Erro ao salvar perfis:", e);
+            }
+        }
+
+        function renderizarSelectPerfis(ativoId) {
+            const select = document.getElementById('select-perfil-empresa');
+            if (!select) return;
+            const perfis = obterListaPerfisStorage();
+            const idAtual = ativoId || localStorage.getItem(PERFIL_ATIVO_ID_KEY) || 'lbtm-oficial';
+
+            select.innerHTML = '';
+            perfis.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.nomePerfil || p.razao || ('Perfil ' + p.id);
+                if (p.id === idAtual) opt.selected = true;
+                select.appendChild(opt);
+            });
+
+            const btnExcluir = document.getElementById('btn-excluir-perfil');
+            if (btnExcluir) {
+                btnExcluir.style.display = idAtual === 'lbtm-oficial' ? 'none' : 'inline-flex';
+            }
+        }
+
+        function trocarPerfilEmpresa(id) {
+            const perfis = obterListaPerfisStorage();
+            const p = perfis.find(item => item.id === id) || perfis[0];
+            if (!p) return;
+
+            localStorage.setItem(PERFIL_ATIVO_ID_KEY, p.id);
+            preencherCamposPerfilUI(p);
+            salvarPerfilLocalStorage();
+            renderizarPropostaA4();
+            renderizarSelectPerfis(p.id);
+        }
+
+        function preencherCamposPerfilUI(p) {
+            if (p.razao !== undefined) document.getElementById('perfil-razao').value = p.razao;
+            if (p.cnpj !== undefined) document.getElementById('perfil-cnpj').value = p.cnpj;
+            if (p.ie !== undefined) document.getElementById('perfil-ie').value = p.ie;
+            if (p.im !== undefined) document.getElementById('perfil-im').value = p.im;
+            if (p.endereco !== undefined) document.getElementById('perfil-endereco').value = p.endereco;
+            if (p.telefone !== undefined) document.getElementById('perfil-telefone').value = p.telefone;
+            if (p.email !== undefined) document.getElementById('perfil-email').value = p.email;
+            if (p.socio !== undefined) document.getElementById('perfil-socio').value = p.socio;
+            if (p.cpfSocio !== undefined) document.getElementById('perfil-cpf-socio').value = p.cpfSocio;
+
+            if (p.showEndereco !== undefined) document.getElementById('toggle-a4-endereco').checked = p.showEndereco;
+            if (p.showTelefone !== undefined) document.getElementById('toggle-a4-telefone').checked = p.showTelefone;
+            if (p.showEmail !== undefined) document.getElementById('toggle-a4-email').checked = p.showEmail;
+            if (p.showInscricoes !== undefined) document.getElementById('toggle-a4-inscricoes').checked = p.showInscricoes;
+        }
+
+        function restaurarPerfilPadraoLBTM() {
+            if (!confirm("Deseja restaurar os dados cadastrais oficiais da LBTM?")) return;
+            preencherCamposPerfilUI(PERFIL_PADRAO_LBTM);
+            localStorage.setItem(PERFIL_ATIVO_ID_KEY, 'lbtm-oficial');
+            
+            // Atualizar no storage da lista
+            let perfis = obterListaPerfisStorage();
+            const idx = perfis.findIndex(item => item.id === 'lbtm-oficial');
+            if (idx >= 0) {
+                perfis[idx] = JSON.parse(JSON.stringify(PERFIL_PADRAO_LBTM));
+            } else {
+                perfis.unshift(JSON.parse(JSON.stringify(PERFIL_PADRAO_LBTM)));
+            }
+            salvarListaPerfisStorage(perfis);
+            salvarPerfilLocalStorage();
+            renderizarSelectPerfis('lbtm-oficial');
+            renderizarPropostaA4();
+            alert("🏢 Perfil oficial da LBTM restaurado com sucesso!");
+        }
+
+        function salvarComoNovoPerfilEmpresa() {
+            const nome = prompt("Digite um nome de identificação para este novo perfil (ex: Filial RJ, Empresa Parceira):");
+            if (!nome || !nome.trim()) return;
+
+            const id = 'perfil-' + Date.now();
+            const novoPerfil = {
+                id: id,
+                nomePerfil: nome.trim(),
+                razao: document.getElementById('perfil-razao').value,
+                cnpj: document.getElementById('perfil-cnpj').value,
+                ie: document.getElementById('perfil-ie').value,
+                im: document.getElementById('perfil-im').value,
+                endereco: document.getElementById('perfil-endereco').value,
+                telefone: document.getElementById('perfil-telefone').value,
+                email: document.getElementById('perfil-email').value,
+                socio: document.getElementById('perfil-socio').value,
+                cpfSocio: document.getElementById('perfil-cpf-socio').value,
+                showEndereco: document.getElementById('toggle-a4-endereco').checked,
+                showTelefone: document.getElementById('toggle-a4-telefone').checked,
+                showEmail: document.getElementById('toggle-a4-email').checked,
+                showInscricoes: document.getElementById('toggle-a4-inscricoes').checked
+            };
+
+            let perfis = obterListaPerfisStorage();
+            perfis.push(novoPerfil);
+            salvarListaPerfisStorage(perfis);
+            localStorage.setItem(PERFIL_ATIVO_ID_KEY, id);
+            renderizarSelectPerfis(id);
+            salvarPerfilLocalStorage();
+            alert(`💾 Perfil "${nome}" cadastrado e ativado com sucesso!`);
+        }
+
+        function excluirPerfilEmpresa() {
+            const idAtual = localStorage.getItem(PERFIL_ATIVO_ID_KEY) || 'lbtm-oficial';
+            if (idAtual === 'lbtm-oficial') {
+                alert("O perfil padrão 'LBTM Oficial' não pode ser excluído.");
+                return;
+            }
+            if (!confirm("Deseja realmente excluir este perfil de empresa?")) return;
+
+            let perfis = obterListaPerfisStorage();
+            perfis = perfis.filter(p => p.id !== idAtual);
+            salvarListaPerfisStorage(perfis);
+            trocarPerfilEmpresa('lbtm-oficial');
+            alert("Perfil excluído com sucesso.");
+        }
+
         // SALVAR E RECUPERAR PERFIL LBTM NO LOCALSTORAGE
         function salvarPerfilLocalStorage() {
+            const idAtual = localStorage.getItem(PERFIL_ATIVO_ID_KEY) || 'lbtm-oficial';
             const perfil = {
+                id: idAtual,
                 razao: document.getElementById('perfil-razao').value,
                 cnpj: document.getElementById('perfil-cnpj').value,
                 ie: document.getElementById('perfil-ie').value,
@@ -2146,30 +2343,23 @@ ${itensTexto}
                 showInscricoes: document.getElementById('toggle-a4-inscricoes').checked
             };
             localStorage.setItem('lbtm_perfil', JSON.stringify(perfil));
+
+            // Manter atualizado na lista de perfis
+            let perfis = obterListaPerfisStorage();
+            const idx = perfis.findIndex(p => p.id === idAtual);
+            if (idx >= 0) {
+                perfis[idx] = { ...perfis[idx], ...perfil };
+                salvarListaPerfisStorage(perfis);
+            }
         }
 
         function carregarPerfilLocalStorage() {
-            const salvo = localStorage.getItem('lbtm_perfil');
-            if (!salvo) return;
-            try {
-                const p = JSON.parse(salvo);
-                if (p.razao) document.getElementById('perfil-razao').value = p.razao;
-                if (p.cnpj) document.getElementById('perfil-cnpj').value = p.cnpj;
-                if (p.ie) document.getElementById('perfil-ie').value = p.ie;
-                if (p.im) document.getElementById('perfil-im').value = p.im;
-                if (p.endereco) document.getElementById('perfil-endereco').value = p.endereco;
-                if (p.telefone) document.getElementById('perfil-telefone').value = p.telefone;
-                if (p.email) document.getElementById('perfil-email').value = p.email;
-                if (p.socio) document.getElementById('perfil-socio').value = p.socio;
-                if (p.cpfSocio) document.getElementById('perfil-cpf-socio').value = p.cpfSocio;
-
-                if (p.showEndereco !== undefined) document.getElementById('toggle-a4-endereco').checked = p.showEndereco;
-                if (p.showTelefone !== undefined) document.getElementById('toggle-a4-telefone').checked = p.showTelefone;
-                if (p.showEmail !== undefined) document.getElementById('toggle-a4-email').checked = p.showEmail;
-                if (p.showInscricoes !== undefined) document.getElementById('toggle-a4-inscricoes').checked = p.showInscricoes;
-            } catch(e) {
-                console.error("Erro ao carregar perfil do localStorage:", e);
-            }
+            const idAtual = localStorage.getItem(PERFIL_ATIVO_ID_KEY) || 'lbtm-oficial';
+            const perfis = obterListaPerfisStorage();
+            const p = perfis.find(item => item.id === idAtual) || perfis[0] || PERFIL_PADRAO_LBTM;
+            
+            preencherCamposPerfilUI(p);
+            renderizarSelectPerfis(p.id);
         }
     </script>
 </body>
