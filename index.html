@@ -741,10 +741,11 @@
             if (idAba === 'aba-diagnostico') atualizarCalculos();
         }
 
-        // LIMPAR SESSÃO / NOVA LICITAÇÃO
+        // LIMPAR SESSÃO / NOVA LICITAÇÃO (SESSÃO ZERO)
         function limparSessaoNovaLicitacao(confirmar = true) {
             if (confirmar && !confirm("Deseja realmente limpar todos os dados e iniciar uma nova licitação?")) return;
 
+            // Reset do estado da licitação
             licitacaoAtual.orgao = "Capitania Fluvial do Tietê-Paraná";
             licitacaoAtual.processo = "Dispensa Eletrônica nº 32/2026";
             licitacaoAtual.uasg = "789320";
@@ -755,13 +756,17 @@
             licitacaoAtual.totalPaginasLidas = 38;
             licitacaoAtual.itens = JSON.parse(JSON.stringify(itensPadraoMarinha));
 
-            atualizarCamposUI();
-            renderizarTabelaItens();
-            atualizarCalculos();
+            // Limpar input de arquivos do navegador para liberar memória
+            const pdfInput = document.getElementById('pdf-input');
+            if (pdfInput) pdfInput.value = '';
 
-            // Esconder status de leitura se houver
+            // Resetar barra de progresso e status
             const statusLeitura = document.getElementById('status-leitura');
             if (statusLeitura) statusLeitura.classList.add('hidden');
+            const barraProgresso = document.getElementById('barra-progresso');
+            if (barraProgresso) barraProgresso.style.width = '0%';
+            const porcentagemStatus = document.getElementById('porcentagem-status');
+            if (porcentagemStatus) porcentagemStatus.innerText = '0%';
             
             // Exibir card de auditoria padrão
             const cardAuditoria = document.getElementById('card-confirmacao-auditoria');
@@ -769,6 +774,14 @@
             const txtAuditoria = document.getElementById('texto-auditoria-detalhe');
             if (txtAuditoria) {
                 txtAuditoria.innerHTML = `<strong>1</strong> arquivo carregado | <strong>38</strong> páginas analisadas | <strong>100%</strong> do conteúdo verificado.`;
+            }
+
+            atualizarCamposUI();
+            renderizarTabelaItens();
+            atualizarCalculos();
+
+            if (confirmar) {
+                trocarAba('aba-leitura');
             }
         }
 
