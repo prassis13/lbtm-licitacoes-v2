@@ -1306,8 +1306,32 @@ na PONTA B e na PONTA C.
                 });
             }
 
-            // Garante ID único
-            const idSalvo = licitacaoAtual.id || ('lbtm-' + Date.now());
+            // Identificar se a licitação na tela já corresponde a uma salva na gaveta
+            // Só atualiza em vez de criar se o órgão e processo coincidirem com o registro gravado
+            let indexExistente = -1;
+            
+            if (licitacaoAtual.id) {
+                indexExistente = gaveta.findIndex(item => item.id === licitacaoAtual.id);
+                // Se encontrou pelo ID, mas o órgão ou processo mudaram (ex: carregou USP em cima de Capitania), trata como NOVA licitação!
+                if (indexExistente >= 0) {
+                    const itemExistente = gaveta[indexExistente];
+                    const orgaoMudou = (orgao !== 'Sem Órgão' && itemExistente.orgao !== 'Sem Órgão' && itemExistente.orgao !== orgao);
+                    const processoMudou = (processo !== 'Sem Processo' && itemExistente.processo !== 'Sem Processo' && itemExistente.processo !== processo);
+                    if (orgaoMudou || processoMudou) {
+                        indexExistente = -1; // Não sobrescreve! Cria novo registro!
+                        licitacaoAtual.id = 'lbtm-' + Date.now();
+                    }
+                }
+            } else {
+                licitacaoAtual.id = 'lbtm-' + Date.now();
+            }
+
+            // Se não encontrou por ID, verifica se já existe uma licitação com o mesmo (órgão + processo)
+            if (indexExistente < 0 && orgao !== 'Sem Órgão' && processo !== 'Sem Processo') {
+                indexExistente = gaveta.findIndex(item => item.orgao === orgao && item.processo === processo);
+            }
+
+            const idSalvo = (indexExistente >= 0) ? gaveta[indexExistente].id : (licitacaoAtual.id || ('lbtm-' + Date.now()));
             licitacaoAtual.id = idSalvo;
 
             const novaLicitacao = {
@@ -1332,19 +1356,9 @@ na PONTA B e na PONTA C.
                 dadosCompletos: JSON.parse(JSON.stringify(licitacaoAtual)) // Backup completo do estado
             };
 
-            // Verifica se já existe uma licitação com o mesmo ID ou mesmo par (orgao + processo) válidos
-            const indexExistente = gaveta.findIndex(item => 
-                (item.id === idSalvo) ||
-                (orgao !== 'Sem Órgão' && processo !== 'Sem Processo' && item.orgao === orgao && item.processo === processo)
-            );
-
             if (indexExistente >= 0) {
-                // Atualiza a licitação se for o mesmo processo/id
-                novaLicitacao.id = gaveta[indexExistente].id;
-                licitacaoAtual.id = novaLicitacao.id;
                 gaveta[indexExistente] = novaLicitacao;
             } else {
-                // ADICIONA como novo item na lista (SEM APAGAR AS OUTRAS)
                 gaveta.unshift(novaLicitacao);
             }
 
@@ -1355,17 +1369,23 @@ na PONTA B e na PONTA C.
             }
         }
 
-        // ABRIR GAVETA / MODAL DE HISTÓRICO
+        // ALIAS HELPER PARA COMPATIBILIDADE GLOBAL
+        function salvarLicitacao() {
+            salvarLicitacaoNaGaveta(true);
+        }
+
+        // ABRIR GAVETA / MODAL DE HISTÓRICO COM RENDERIZAÇÃO ROBUSTA
         function abrirGavetaHistorico() {
             const modal = document.getElementById('modal-historico');
             const listaEl = document.getElementById('lista-licitacoes-gaveta');
             const contEl = document.getElementById('contador-licitacoes-gaveta');
+            if (!modal || !listaEl) return;
 
             const gaveta = carregarGavetaStorage();
             listaEl.innerHTML = '';
-            contEl.innerText = `${gaveta.length} licitação(ões) salva(s)`;
+            if (contEl) contEl.innerText = `${gaveta.length} licitação(ões) salva(s)`;
 
-            if (gaveta.length === 0) {
+            if (!gaveta || gaveta.length === 0) {
                 listaEl.innerHTML = `
                     <div class="text-center py-8 text-gray-500 text-xs">
                         <p class="text-2xl mb-2">📭</p>
@@ -1375,48 +1395,63 @@ na PONTA B e na PONTA C.
                 `;
             } else {
                 gaveta.forEach((lic, idx) => {
-                    let totalProp = lic.totalProposto || lic.valorTotal || 0;
-                    if (!totalProp && lic.itens) {
-                        lic.itens.forEach(it => totalProp += (it.qtd * it.precoUnit) || 0);
-                    }
-                    const numItens = lic.qtdItens || (lic.itens ? lic.itens.length : 0);
-                    const isAtiva = lic.id === licitacaoAtual.id;
+                    try {
+                        if (!lic) return;
+                        let totalProp = Number(lic.totalProposto) || Number(lic.valorTotal) || 0;
+                        if (!totalProp && lic.itens && Array.isArray(lic.itens)) {
+                            lic.itens.forEach(it => {
+                                totalProp += (Number(it.qtd) * Number(it.precoUnit)) || 0;
+                            });
+                        }
+                        const numItens = lic.qtdItens || (lic.itens ? lic.itens.length : 0);
+                        const isAtiva = lic.id && (lic.id === licitacaoAtual.id);
+                        const idSeguro = lic.id || ('lbtm-item-' + idx);
+                        const tituloExibicao = lic.titulo || `${lic.orgao || 'Sem Órgão'} — ${lic.processo || 'Sem Processo'}`;
 
-                    const card = document.createElement('div');
-                    card.className = `p-3 rounded-xl border flex flex-wrap justify-between items-center gap-3 transition ${isAtiva ? 'bg-emerald-950/30 border-emerald-500/50' : 'bg-lbtm-bg border-lbtm-border hover:border-gray-600'}`;
-                    card.innerHTML = `
-                        <div class="space-y-1 flex-1 min-w-[200px]">
+                        const card = document.createElement('div');
+                        card.className = `p-3.5 rounded-xl border flex flex-wrap justify-between items-center gap-3 transition ${isAtiva ? 'bg-emerald-950/40 border-emerald-500/60 shadow-lg shadow-emerald-950/30' : 'bg-lbtm-bg/80 border-lbtm-border hover:border-gray-500'}`;
+                        card.innerHTML = `
+                            <div class="space-y-1.5 flex-1 min-w-[200px]">
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-bold text-xs text-white">${tituloExibicao}</span>
+                                    ${isAtiva ? '<span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] rounded font-bold">ATIVA NA TELA</span>' : ''}
+                                </div>
+                                <div class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-400">
+                                    <span>💰 Proposta: <strong class="text-emerald-400 font-semibold">${formatarMoeda(totalProp)}</strong></span>
+                                    <span>📦 ${numItens} item(ns)</span>
+                                    <span>📅 ${lic.dataSalvo || 'Data N/D'}</span>
+                                </div>
+                            </div>
                             <div class="flex items-center space-x-2">
-                                <span class="font-bold text-xs text-white">${lic.titulo || lic.orgao || 'Licitação'}</span>
-                                ${isAtiva ? '<span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] rounded font-bold">ATIVA NA TELA</span>' : ''}
+                                <button onclick="carregarLicitacaoDaGaveta('${idSeguro}')" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                                    🟢 Abrir
+                                </button>
+                                <button onclick="exportarItemGaveta('${idSeguro}')" class="px-2.5 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold transition" title="Baixar arquivo .lbtm">
+                                    📥 Backup
+                                </button>
+                                <button onclick="excluirLicitacaoDaGaveta('${idSeguro}')" class="px-2.5 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold transition" title="Excluir da gaveta">
+                                    🗑️
+                                </button>
                             </div>
-                            <div class="flex flex-wrap gap-x-3 text-[11px] text-gray-400">
-                                <span>💰 Proposta: <strong class="text-emerald-400">${formatarMoeda(totalProp)}</strong></span>
-                                <span>📦 ${numItens} itens</span>
-                                <span>📅 ${lic.dataSalvo || 'Data N/D'}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button onclick="carregarLicitacaoDaGaveta('${lic.id}')" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1">
-                                🟢 Abrir
-                            </button>
-                            <button onclick="exportarItemGaveta('${lic.id}')" class="px-2.5 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold transition" title="Baixar arquivo .lbtm">
-                                📥 Backup
-                            </button>
-                            <button onclick="excluirLicitacaoDaGaveta('${lic.id}')" class="px-2.5 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold transition" title="Excluir da gaveta">
-                                🗑️
-                            </button>
-                        </div>
-                    `;
-                    listaEl.appendChild(card);
+                        `;
+                        listaEl.appendChild(card);
+                    } catch(errCard) {
+                        console.error(`Erro ao renderizar card da licitação #${idx}:`, errCard);
+                    }
                 });
             }
 
             modal.classList.remove('hidden');
         }
 
+        // ALIAS HELPER PARA COMPATIBILIDADE GLOBAL
+        function renderizarGaveta() {
+            abrirGavetaHistorico();
+        }
+
         function fecharGavetaHistorico() {
-            document.getElementById('modal-historico').classList.add('hidden');
+            const modal = document.getElementById('modal-historico');
+            if (modal) modal.classList.add('hidden');
         }
 
         function carregarLicitacaoDaGaveta(id) {
