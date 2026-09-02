@@ -898,6 +898,9 @@
         function inicializarGavetaComMarinhaDemo() {
             const gaveta = carregarGavetaStorage();
             if (gaveta.length === 0) {
+                let totalProp = 0;
+                itensPadraoMarinha.forEach(it => totalProp += (it.qtd * it.precoUnit));
+
                 const demoMarinha = {
                     id: 'lbtm-marinha-demo',
                     titulo: 'Capitania Fluvial do Tietê-Paraná — Dispensa Eletrônica nº 32/2026',
@@ -908,6 +911,9 @@
                     local: "Barra Bonita - SP",
                     tetoTotal: 63676.27,
                     vigencia: "12 Meses",
+                    totalProposto: totalProp,
+                    valorTotal: totalProp,
+                    qtdItens: itensPadraoMarinha.length,
                     totalArquivosLidos: 1,
                     totalPaginasLidas: 38,
                     itens: JSON.parse(JSON.stringify(itensPadraoMarinha)),
@@ -916,58 +922,75 @@
                         { chave: 'Responsável Técnico / CREA', valor: 'Reg. CREA-SP nº XXXXXXXXXX', ativo: true }
                     ]
                 };
+                demoMarinha.dadosCompletos = JSON.parse(JSON.stringify(demoMarinha));
                 salvarGavetaStorage([demoMarinha]);
             }
         }
 
-        // SALVAR LICITAÇÃO ATUAL NA GAVETA
+        // SALVAR LICITAÇÃO ATUAL NA GAVETA (MODO ACUMULATIVO SEM SOBRESCRITA INDEVIDA)
         function salvarLicitacaoNaGaveta(notificar = true) {
             atualizarCalculos();
-            
-            const orgao = licitacaoAtual.orgao.trim() || 'Órgão Não Informado';
-            const proc = licitacaoAtual.processo.trim() || 'Processo S/N';
-            const agora = new Date();
-            const dataFmt = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            
-            const titulo = `${orgao} — ${proc}`;
-            const id = licitacaoAtual.id || ('lbtm-' + Date.now());
-            licitacaoAtual.id = id;
-
-            let totalProposto = 0;
-            licitacaoAtual.itens.forEach(it => {
-                totalProposto += (it.qtd * it.precoUnit) || 0;
-            });
-
-            const registro = {
-                id: id,
-                titulo: titulo,
-                dataSalvo: dataFmt,
-                totalProposto: totalProposto,
-                orgao: licitacaoAtual.orgao,
-                processo: licitacaoAtual.processo,
-                uasg: licitacaoAtual.uasg,
-                local: licitacaoAtual.local,
-                tetoTotal: licitacaoAtual.tetoTotal,
-                vigencia: licitacaoAtual.vigencia,
-                totalArquivosLidos: licitacaoAtual.totalArquivosLidos,
-                totalPaginasLidas: licitacaoAtual.totalPaginasLidas,
-                itens: JSON.parse(JSON.stringify(licitacaoAtual.itens)),
-                riscos: licitacaoAtual.riscos ? JSON.parse(JSON.stringify(licitacaoAtual.riscos)) : undefined,
-                camposDinamicos: JSON.parse(JSON.stringify(licitacaoAtual.camposDinamicos))
-            };
 
             let gaveta = carregarGavetaStorage();
-            const idxExistente = gaveta.findIndex(g => g.id === id);
-            if (idxExistente >= 0) {
-                gaveta[idxExistente] = registro;
+            
+            const orgao = (licitacaoAtual.orgao && licitacaoAtual.orgao.trim()) ? licitacaoAtual.orgao.trim() : 'Sem Órgão';
+            const processo = (licitacaoAtual.processo && licitacaoAtual.processo.trim()) ? licitacaoAtual.processo.trim() : 'Sem Processo';
+            const uasg = licitacaoAtual.uasg || '';
+            const agora = new Date();
+            const dataSalvo = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            let totalProposto = 0;
+            if (licitacaoAtual.itens && licitacaoAtual.itens.length > 0) {
+                licitacaoAtual.itens.forEach(it => {
+                    totalProposto += (Number(it.qtd) * Number(it.precoUnit)) || 0;
+                });
+            }
+
+            // Garante ID único
+            const idSalvo = licitacaoAtual.id || ('lbtm-' + Date.now());
+            licitacaoAtual.id = idSalvo;
+
+            const novaLicitacao = {
+                id: idSalvo,
+                titulo: `${orgao} — ${processo}`,
+                orgao: orgao,
+                processo: processo,
+                uasg: uasg,
+                local: licitacaoAtual.local || '',
+                tetoTotal: licitacaoAtual.tetoTotal || 0,
+                vigencia: licitacaoAtual.vigencia || '12 Meses',
+                totalProposto: totalProposto,
+                valorTotal: totalProposto,
+                qtdItens: licitacaoAtual.itens ? licitacaoAtual.itens.length : 0,
+                totalArquivosLidos: licitacaoAtual.totalArquivosLidos || 0,
+                totalPaginasLidas: licitacaoAtual.totalPaginasLidas || 0,
+                dataSalvo: dataSalvo,
+                itens: JSON.parse(JSON.stringify(licitacaoAtual.itens || [])),
+                riscos: licitacaoAtual.riscos ? JSON.parse(JSON.stringify(licitacaoAtual.riscos)) : undefined,
+                camposDinamicos: JSON.parse(JSON.stringify(licitacaoAtual.camposDinamicos || [])),
+                dadosCompletos: JSON.parse(JSON.stringify(licitacaoAtual)) // Backup completo do estado
+            };
+
+            // Verifica se já existe uma licitação com o mesmo ID ou mesmo par (orgao + processo) válidos
+            const indexExistente = gaveta.findIndex(item => 
+                (item.id === idSalvo) ||
+                (orgao !== 'Sem Órgão' && processo !== 'Sem Processo' && item.orgao === orgao && item.processo === processo)
+            );
+
+            if (indexExistente >= 0) {
+                // Atualiza a licitação se for o mesmo processo/id
+                novaLicitacao.id = gaveta[indexExistente].id;
+                licitacaoAtual.id = novaLicitacao.id;
+                gaveta[indexExistente] = novaLicitacao;
             } else {
-                gaveta.unshift(registro);
+                // ADICIONA como novo item na lista (SEM APAGAR AS OUTRAS)
+                gaveta.unshift(novaLicitacao);
             }
 
             salvarGavetaStorage(gaveta);
 
             if (notificar) {
-                alert(`💾 Licitação "${titulo}" salva com sucesso na Gaveta!`);
+                alert(`💾 Licitação "${novaLicitacao.titulo}" salva com sucesso na Gaveta! Total salvo: ${gaveta.length} licitação(ões).`);
             }
         }
 
@@ -986,16 +1009,16 @@
                     <div class="text-center py-8 text-gray-500 text-xs">
                         <p class="text-2xl mb-2">📭</p>
                         <p>Nenhuma licitação salva na gaveta ainda.</p>
-                        <p class="mt-1">Clique em <strong>💾 Salvar</strong> para guardar seu edital atual.</p>
+                        <p class="mt-1">Clique em <strong>💾 Salvar</strong> na barra superior para guardar seu edital atual.</p>
                     </div>
                 `;
             } else {
                 gaveta.forEach((lic, idx) => {
-                    let totalProp = lic.totalProposto || 0;
+                    let totalProp = lic.totalProposto || lic.valorTotal || 0;
                     if (!totalProp && lic.itens) {
                         lic.itens.forEach(it => totalProp += (it.qtd * it.precoUnit) || 0);
                     }
-                    const numItens = lic.itens ? lic.itens.length : 0;
+                    const numItens = lic.qtdItens || (lic.itens ? lic.itens.length : 0);
                     const isAtiva = lic.id === licitacaoAtual.id;
 
                     const card = document.createElement('div');
@@ -1003,8 +1026,8 @@
                     card.innerHTML = `
                         <div class="space-y-1 flex-1 min-w-[200px]">
                             <div class="flex items-center space-x-2">
-                                <span class="font-bold text-xs text-white">${lic.titulo || 'Licitação'}</span>
-                                ${isAtiva ? '<span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] rounded font-bold">ATIVA</span>' : ''}
+                                <span class="font-bold text-xs text-white">${lic.titulo || lic.orgao || 'Licitação'}</span>
+                                ${isAtiva ? '<span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] rounded font-bold">ATIVA NA TELA</span>' : ''}
                             </div>
                             <div class="flex flex-wrap gap-x-3 text-[11px] text-gray-400">
                                 <span>💰 Proposta: <strong class="text-emerald-400">${formatarMoeda(totalProp)}</strong></span>
@@ -1037,10 +1060,12 @@
 
         function carregarLicitacaoDaGaveta(id) {
             const gaveta = carregarGavetaStorage();
-            const lic = gaveta.find(g => g.id === id);
-            if (!lic) return;
+            const item = gaveta.find(g => g.id === id);
+            if (!item) return;
 
+            const lic = item.dadosCompletos || item;
             carregarObjetoLicitacao(lic);
+            licitacaoAtual.id = item.id; // Mantém o ID ativo sincronizado
             fecharGavetaHistorico();
             trocarAba('aba-leitura');
         }
