@@ -36,7 +36,7 @@
         /* REGRAS DE IMPRESSÃO A4 PROPORCIONAIS E FLUIDAS */
         @media print {
             @page {
-                size: A4 portrait;
+                size: A4;
                 margin: 10mm 12mm;
             }
             .no-print { display: none !important; }
@@ -72,13 +72,12 @@
                 display: block !important;
             }
             
-            #folha-proposta-a4, #folha-executivo-a4 {
+            #folha-proposta-a4, #relatorio-executivo-pdf, #folha-executivo-a4 {
                 width: 100% !important;
                 max-width: 100% !important;
-                box-sizing: border-box !important;
-                box-shadow: none !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                box-shadow: none !important;
                 border: none !important;
             }
             
@@ -179,12 +178,12 @@
                 </div>
 
                 <!-- DROPZONE -->
-                <div class="border-2 border-dashed border-lbtm-border rounded-xl p-8 text-center hover:border-emerald-500/50 transition bg-lbtm-bg/50">
+                <div id="dropzone-pdf" class="border-2 border-dashed border-lbtm-border rounded-xl p-8 text-center hover:border-emerald-500/50 transition bg-lbtm-bg/50">
                     <input type="file" id="pdf-input" multiple accept="application/pdf" class="hidden" onchange="processarPDFs(event)">
                     <label for="pdf-input" class="cursor-pointer space-y-3 block">
                         <div class="text-4xl">📄</div>
                         <span class="text-sm font-semibold text-emerald-400 block">Clique para selecionar os PDFs do Edital</span>
-                        <span class="text-xs text-gray-500 block">Capitania, Polícia Penal, USP, Prefeituras, etc. (Suporta múltiplos arquivos)</span>
+                        <span class="text-xs text-gray-500 block">Capitania, Polícia Penal, USP, Prefeituras, etc. (Suporta múltiplos arquivos ou arraste e solte)</span>
                     </label>
                 </div>
 
@@ -764,6 +763,31 @@
             carregarPerfilLocalStorage();
             inicializarGavetaComMarinhaDemo();
             
+            // Configurar listeners do Leitor de PDF (Input e Drag and Drop)
+            const pdfInputEl = document.getElementById('pdf-input');
+            if (pdfInputEl) {
+                pdfInputEl.addEventListener('change', processarPDFs);
+            }
+
+            const dropzoneEl = document.getElementById('dropzone-pdf');
+            if (dropzoneEl) {
+                dropzoneEl.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropzoneEl.classList.add('border-emerald-500', 'bg-emerald-950/30');
+                });
+                dropzoneEl.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    dropzoneEl.classList.remove('border-emerald-500', 'bg-emerald-950/30');
+                });
+                dropzoneEl.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropzoneEl.classList.remove('border-emerald-500', 'bg-emerald-950/30');
+                    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+                        processarPDFs({ target: { files: e.dataTransfer.files } });
+                    }
+                });
+            }
+
             // Carrega o edital ativo ou o primeiro da gaveta
             const gaveta = carregarGavetaStorage();
             if (gaveta.length > 0) {
@@ -1144,7 +1168,7 @@
         // LEITURA DE PDFS COM PDF.JS E RESET AUTOMÁTICO
         // ==========================================
         async function processarPDFs(event) {
-            const files = event.target.files;
+            const files = (event && event.target && event.target.files) ? event.target.files : ((event && event.files) ? event.files : event);
             if (!files || !files.length) return;
 
             // 1ª LINHA OBRIGATÓRIA: Limpeza TOTAL do processo anterior (sem limpar o input de arquivo atual!)
