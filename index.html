@@ -33,23 +33,23 @@
         body { background-color: #0b0f17; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
         .tab-btn.active { border-bottom: 3px solid #10b981; color: #10b981; font-weight: bold; }
         
-        /* REGRAS DE IMPRESSÃO A4 COM RECUO LATERAL GENEROSO (PADRÃO OFICIAL ABNT) */
+        /* REGRAS DE IMPRESSÃO A4 PROPORCIONAIS E FLUIDAS */
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 15mm 20mm 15mm 20mm; /* 20mm nas laterais esquerda e direita */
+                margin: 10mm 12mm;
             }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             
             html, body {
                 background: white !important;
-                color: #111827 !important;
+                color: black !important;
                 width: 100% !important;
                 height: auto !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                font-size: 10pt;
+                font-size: 11px;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
@@ -57,7 +57,7 @@
             main {
                 max-width: 100% !important;
                 width: 100% !important;
-                margin: 0 auto !important;
+                margin: 0 !important;
                 padding: 0 !important;
             }
             
@@ -74,15 +74,15 @@
             
             #folha-proposta-a4, #folha-executivo-a4 {
                 width: 100% !important;
-                max-width: 175mm !important; /* Garante área útil centralizada e recuo das bordas */
+                max-width: 100% !important;
                 box-sizing: border-box !important;
                 box-shadow: none !important;
-                padding: 6mm 10mm !important; /* Recuo interno fixo de segurança nas margens esquerda e direita */
-                margin: 0 auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
                 border: none !important;
             }
             
-            table { page-break-inside: auto; width: 100% !important; border-collapse: collapse !important; }
+            table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; }
             tr { page-break-inside: avoid; page-break-after: auto; }
             th, td { padding: 4px 6px !important; }
             thead { display: table-header-group; }
@@ -1030,7 +1030,7 @@
         }
 
         // RESET COMPLETO DE VARIÁVEIS (SESSÃO ZERO - NADA HARDCODED)
-        function resetProcessoData() {
+        function resetProcessoData(limparInput = true) {
             licitacaoAtual = {
                 id: 'lbtm-' + Date.now(),
                 orgao: '',
@@ -1048,9 +1048,11 @@
                 ]
             };
 
-            // Reset do input de arquivo
-            const pdfInput = document.getElementById('pdf-input');
-            if (pdfInput) pdfInput.value = '';
+            // Reset do input de arquivo apenas se explicitamente solicitado
+            if (limparInput) {
+                const pdfInput = document.getElementById('pdf-input');
+                if (pdfInput) pdfInput.value = '';
+            }
 
             // Reset barra de progresso e auditoria
             const statusLeitura = document.getElementById('status-leitura');
@@ -1143,10 +1145,10 @@
         // ==========================================
         async function processarPDFs(event) {
             const files = event.target.files;
-            if (!files.length) return;
+            if (!files || !files.length) return;
 
-            // 1ª LINHA OBRIGATÓRIA: Limpeza TOTAL do processo anterior!
-            resetProcessoData();
+            // 1ª LINHA OBRIGATÓRIA: Limpeza TOTAL do processo anterior (sem limpar o input de arquivo atual!)
+            resetProcessoData(false);
 
             const status = document.getElementById('status-leitura');
             const textoStatus = document.getElementById('texto-status');
