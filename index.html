@@ -210,13 +210,31 @@
                         <div>
                             <h4 class="font-bold text-emerald-300 uppercase tracking-wide">Auditoria Conclusiva de Edital</h4>
                             <p id="texto-auditoria-detalhe" class="text-gray-300 mt-0.5">
-                                <strong>1</strong> arquivo lido | <strong>38</strong> páginas analisadas | <strong>100%</strong> do conteúdo verificado.
+                                <strong>1</strong> arquivo lido | <strong>38</strong> páginas analisadas | <strong>12</strong> itens de tabela identificados.
                             </p>
                         </div>
                     </div>
                     <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 font-semibold rounded text-[11px] border border-emerald-500/30 whitespace-nowrap">
                         ✔ 100% Verificado
                     </span>
+                </div>
+
+                <!-- CARD DE ALERTA DE TABELA DETECTADA NO EDITAL -->
+                <div id="card-alerta-tabela" class="mt-3 bg-amber-950/40 border border-amber-500/50 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg hidden">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                            ⚠️
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-amber-300 uppercase tracking-wide">Tabela Detectada no Edital</h4>
+                            <p id="texto-alerta-tabela" class="text-gray-300 mt-0.5">
+                                Verifique os itens extraídos e adicione/complemente valores na Aba 3 se necessário.
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="trocarAba('aba-planilha')" class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold rounded text-[11px] border border-amber-500/30 transition flex items-center gap-1">
+                        Ver Planilha ➔
+                    </button>
                 </div>
             </div>
 
@@ -635,7 +653,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div class="border border-red-300 bg-red-50 p-2.5 rounded text-[11px] space-y-1">
                             <strong class="text-red-700 block">🛑 Sinal Vermelho (Prazos & Habilitação)</strong>
-                            <ul class="list-disc pl-3 text-gray-700 space-y-1">
+                            <ul class="list-disc pl-3 text-gray-700 space-y-1" id="exec-riscos-vermelho">
                                 <li>Atestado de Capacidade Técnica de no mínimo 1 ano.</li>
                                 <li>Vedada subcontratação não registrada.</li>
                                 <li>Prazo de 3h para envio da documentação no Compras.gov.br.</li>
@@ -643,7 +661,7 @@
                         </div>
                         <div class="border border-yellow-300 bg-yellow-50 p-2.5 rounded text-[11px] space-y-1">
                             <strong class="text-yellow-800 block">🟡 Sinal Amarelo (Operacional)</strong>
-                            <ul class="list-disc pl-3 text-gray-700 space-y-1">
+                            <ul class="list-disc pl-3 text-gray-700 space-y-1" id="exec-riscos-amarelo">
                                 <li>Recolhimento obrigatório de fluidos e logística reversa.</li>
                                 <li>Verificar capacidades de BTUs omitidas no edital.</li>
                                 <li>Validade da proposta de no mínimo 60 dias.</li>
@@ -651,7 +669,7 @@
                         </div>
                         <div class="border border-emerald-300 bg-emerald-50 p-2.5 rounded text-[11px] space-y-1">
                             <strong class="text-emerald-700 block">🟢 Sinal Verde (Documentação)</strong>
-                            <ul class="list-disc pl-3 text-gray-700 space-y-1">
+                            <ul class="list-disc pl-3 text-gray-700 space-y-1" id="exec-riscos-verde">
                                 <li>CNPJ + CND Federal / INSS regular.</li>
                                 <li>CND Estadual + Municipal em dia.</li>
                                 <li>CRF FGTS + CNDT Trabalhista.</li>
@@ -895,6 +913,7 @@
                 totalArquivosLidos: licitacaoAtual.totalArquivosLidos,
                 totalPaginasLidas: licitacaoAtual.totalPaginasLidas,
                 itens: JSON.parse(JSON.stringify(licitacaoAtual.itens)),
+                riscos: licitacaoAtual.riscos ? JSON.parse(JSON.stringify(licitacaoAtual.riscos)) : undefined,
                 camposDinamicos: JSON.parse(JSON.stringify(licitacaoAtual.camposDinamicos))
             };
 
@@ -1015,11 +1034,13 @@
                 totalArquivosLidos: lic.totalArquivosLidos || 0,
                 totalPaginasLidas: lic.totalPaginasLidas || 0,
                 itens: JSON.parse(JSON.stringify(lic.itens || [])),
+                riscos: lic.riscos ? JSON.parse(JSON.stringify(lic.riscos)) : undefined,
                 camposDinamicos: JSON.parse(JSON.stringify(lic.camposDinamicos || []))
             };
 
             atualizarCamposUI();
             renderizarTabelaItens();
+            renderizarRiscosUI(licitacaoAtual.riscos);
             carregarCamposDinamicosPerfilUI();
             atualizarCalculos();
 
@@ -1027,7 +1048,8 @@
             const txtAuditoria = document.getElementById('texto-auditoria-detalhe');
             if (licitacaoAtual.totalPaginasLidas > 0) {
                 if (cardAuditoria && txtAuditoria) {
-                    txtAuditoria.innerHTML = `<strong>${licitacaoAtual.totalArquivosLidos || 1}</strong> arquivo(s) lido(s) | <strong>${licitacaoAtual.totalPaginasLidas}</strong> páginas analisadas | <strong>100%</strong> do conteúdo verificado.`;
+                    const numItens = licitacaoAtual.itens ? licitacaoAtual.itens.length : 0;
+                    txtAuditoria.innerHTML = `<strong>${licitacaoAtual.totalArquivosLidos || 1}</strong> arquivo(s) lido(s) | <strong>${licitacaoAtual.totalPaginasLidas}</strong> páginas analisadas | <strong>${numItens}</strong> itens de tabela identificados.`;
                     cardAuditoria.classList.remove('hidden');
                 }
             } else if (cardAuditoria) {
@@ -1066,6 +1088,24 @@
                 totalArquivosLidos: 0,
                 totalPaginasLidas: 0,
                 itens: [], // Tabela 100% vazia!
+                riscos: {
+                    vermelho: [
+                        "<strong>Atestado de Capacidade Técnica:</strong> Exige comprovação de no mínimo 1 ano em serviços equivalentes.",
+                        "<strong>Vedação de Subcontratação:</strong> Proibida a execução por terceiros não registrados.",
+                        "<strong>Prazo do Sistema:</strong> Apenas 3 horas para envio da documentação no Compras.gov.br após arrematar."
+                    ],
+                    amarelo: [
+                        "<strong>Regra de Sustentabilidade:</strong> Recolhimento obrigatório de fluidos/gás e logística reversa de óleos/peças velhas.",
+                        "<strong>Omissão de BTUs:</strong> Verificar capacidades não descritas antes do lance.",
+                        "<strong>Validade da Proposta:</strong> Mínimo de 60 dias corridos."
+                    ],
+                    verde: [
+                        "Cartão CNPJ + CND Federal / INSS",
+                        "CND Estadual + CND Municipal em dia",
+                        "CRF FGTS + CNDT Trabalhista",
+                        "Balanço Patrimonial / Certidão Negativa de Falência"
+                    ]
+                },
                 camposDinamicos: [
                     { chave: 'Dados Bancários p/ Crédito', valor: 'Banco do Brasil | Ag: 0000-0 | C/C: 00000-0', ativo: true },
                     { chave: 'Responsável Técnico / CREA', valor: 'Reg. CREA-SP nº XXXXXXXXXX', ativo: true }
@@ -1078,7 +1118,7 @@
                 if (pdfInput) pdfInput.value = '';
             }
 
-            // Reset barra de progresso e auditoria
+            // Reset barra de progresso, auditoria e alerta de tabela
             const statusLeitura = document.getElementById('status-leitura');
             if (statusLeitura) statusLeitura.classList.add('hidden');
             const barraProgresso = document.getElementById('barra-progresso');
@@ -1087,9 +1127,12 @@
             if (porcentagemStatus) porcentagemStatus.innerText = '0%';
             const cardAuditoria = document.getElementById('card-confirmacao-auditoria');
             if (cardAuditoria) cardAuditoria.classList.add('hidden');
+            const cardAlerta = document.getElementById('card-alerta-tabela');
+            if (cardAlerta) cardAlerta.classList.add('hidden');
 
             atualizarCamposUI();
             renderizarTabelaItens();
+            renderizarRiscosUI();
             carregarCamposDinamicosPerfilUI();
             atualizarCalculos();
         }
@@ -1165,6 +1208,240 @@
         }
 
         // ==========================================
+        // MOTOR ESPECIALISTA DE LEITURA & RECONHECIMENTO DE TABELAS (PDF.JS)
+        // ==========================================
+
+        // RECONSTRUTOR DE LINHAS DE TEXTO POR COORDENADAS ESPACIAIS
+        function reconstruirLinhasPagina(textContent) {
+            const items = textContent.items;
+            if (!items || !items.length) return [];
+
+            const linhasMap = [];
+            items.forEach(item => {
+                const str = item.str;
+                if (!str || !str.trim()) return;
+                const x = item.transform[4];
+                const y = Math.round(item.transform[5]);
+
+                let linhaExistente = linhasMap.find(l => Math.abs(l.y - y) <= 4);
+                if (linhaExistente) {
+                    linhaExistente.items.push({ str, x });
+                } else {
+                    linhasMap.push({ y, items: [{ str, x }] });
+                }
+            });
+
+            // Ordenar de cima para baixo (maior Y primeiro no sistema de coordenadas do PDF)
+            linhasMap.sort((a, b) => b.y - a.y);
+
+            // Para cada linha, ordenar itens horizontalmente da esquerda para a direita (menor X primeiro)
+            return linhasMap.map(l => {
+                l.items.sort((a, b) => a.x - b.x);
+                return l.items.map(it => it.str).join(' ').trim();
+            }).filter(txt => txt.length > 0);
+        }
+
+        // EXTRAÇÃO AVANÇADA DE ITENS DA TABELA DE PREÇOS (LEI 14.133/2021)
+        function extrairTabelaItensDeTexto(todasLinhas, textoCompleto) {
+            const itens = [];
+            const itemSet = new Set();
+
+            todasLinhas.forEach(linha => {
+                // Ignora cabeçalhos genéricos
+                if (/^(?:item|lote|código|descrição|especificação|unidade|quantidade|valor)\b/i.test(linha) && /unit[aá]rio|total|marca|refer[eê]ncia/i.test(linha)) {
+                    return;
+                }
+
+                // Padrão 1: Linha estruturada com tags de campos (ex: Item 01 - Manutenção Ar Split - Qtd: 30 - Valor: 185,00)
+                const matchTag = linha.match(/(?:item|lote)\s*(\d{1,3})\s*[:\-\.]?\s*(.*?)(?:(?:qtd|quantidade|quant\.?)[:\s]+(\d+))\s*(?:un|und|unid|sv|serv|pç|pc)?.*?(?:(?:unit[aá]rio|teto|estimado|unit\.?|r\$)?[:\s]*(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2}))/i);
+                if (matchTag) {
+                    const num = parseInt(matchTag[1], 10).toString();
+                    if (!itemSet.has(num)) {
+                        itemSet.add(num);
+                        const desc = matchTag[2].trim().replace(/^[-–:\.\s]+|[-–:\.\s]+$/g, '') || ('Item ' + num);
+                        const qtd = parseInt(matchTag[3], 10) || 1;
+                        const preco = tratarNumeroInput(matchTag[4]);
+                        itens.push({
+                            item: num,
+                            desc: desc.substring(0, 150),
+                            qtd: qtd,
+                            tetoUnit: preco,
+                            marca: detectarMarcaNoTexto(desc) || 'Referência / Similar',
+                            precoUnit: preco
+                        });
+                        return;
+                    }
+                }
+
+                // Padrão 2: Linha tabular compacta (ex: "01 Manutenção Preventiva Split 12k 30 UN 185,00" ou "1 | Limpeza Split | 20 | 267,50")
+                const matchTab = linha.match(/^(?:item\s*)?(\d{1,3})[\s\.\-\|\/]+([A-Za-zÀ-ÿ0-9\s\(\)\/\-\.,;:]{3,120}?)\s+(\d{1,5})\s+(?:UN|UND|UNID|SV|SERV|PÇ|PC|MES|MÊS|HORA|H|KG|PAR|CJ|CONJ|DIARIA|DIÁRIA|M2|M3|GL|KM|UNIDADE|SERVIÇO|SERVICO)?\s*(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})/i);
+                if (matchTab) {
+                    const num = parseInt(matchTab[1], 10).toString();
+                    if (!itemSet.has(num)) {
+                        itemSet.add(num);
+                        const desc = matchTab[2].trim().replace(/^[-–:\.\s]+|[-–:\.\s]+$/g, '');
+                        const qtd = parseInt(matchTab[3], 10) || 1;
+                        const preco = tratarNumeroInput(matchTab[4]);
+                        if (preco > 0) {
+                            itens.push({
+                                item: num,
+                                desc: desc.substring(0, 150),
+                                qtd: qtd,
+                                tetoUnit: preco,
+                                marca: detectarMarcaNoTexto(desc) || 'Referência / Similar',
+                                precoUnit: preco
+                            });
+                        }
+                    }
+                }
+            });
+
+            // Padrão 3: Varredura de blocos no texto global caso a varredura por linha encontre poucos itens
+            if (itens.length < 2) {
+                const blocoRegex = /(?:ITEM|LOTE)\s*(\d{1,3})[:\s\-\.]+(?:DESCRI[CÇ][AÃ]O[:\s]+)?([A-Za-zÀ-ÿ0-9\s\(\)\/\-\.,;:]{5,180}?)(?:QUANTIDADE|QTD|QUANT\.?)[:\s]+(\d+)(?:[^\n\r]*?)(?:VALOR\s*(?:UNIT[AÁ]RIO|ESTIMADO|M[AÁ]XIMO|REFER[EÊ]NCIA)?|PRE[CÇ]O\s*UNIT[AÁ]RIO)?[:\s]*(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})/gi;
+                let match;
+                while ((match = blocoRegex.exec(textoCompleto)) !== null) {
+                    const num = parseInt(match[1], 10).toString();
+                    if (!itemSet.has(num)) {
+                        itemSet.add(num);
+                        const desc = match[2].trim().replace(/^[-–:\.\s]+|[-–:\.\s]+$/g, '');
+                        const qtd = parseInt(match[3], 10) || 1;
+                        const preco = tratarNumeroInput(match[4]);
+                        itens.push({
+                            item: num,
+                            desc: desc.substring(0, 150),
+                            qtd: qtd,
+                            tetoUnit: preco,
+                            marca: detectarMarcaNoTexto(desc) || 'Referência / Similar',
+                            precoUnit: preco
+                        });
+                    }
+                }
+            }
+
+            // Ordenação numérica dos itens
+            itens.sort((a, b) => parseInt(a.item, 10) - parseInt(b.item, 10));
+            return itens;
+        }
+
+        // DETECÇÃO AUTOMÁTICA DE MARCAS NO TEXTO
+        function detectarMarcaNoTexto(desc) {
+            const d = desc.toLowerCase();
+            if (d.includes('springer') || d.includes('midea') || d.includes('carrier')) return 'Springer / Midea / Carrier';
+            if (d.includes('elgin')) return 'Elgin';
+            if (d.includes('daikin')) return 'Daikin';
+            if (d.includes('fujitsu')) return 'Fujitsu';
+            if (d.includes('lg')) return 'LG';
+            if (d.includes('samsung')) return 'Samsung';
+            if (d.includes('electrolux') || d.includes('brastemp') || d.includes('consul')) return 'Electrolux / Brastemp / Consul';
+            if (d.includes('ibbl') || d.includes('karina')) return 'IBBL / Karina';
+            if (d.includes('compressor')) return 'Original / Tecumseh / Embraco';
+            return '';
+        }
+
+        // MATRIZ ESPECIALISTA DE DIAGNÓSTICO E RISCOS (LEI 14.133/2021)
+        function extrairRiscosEDiagnostico(textoCompleto) {
+            const txt = textoCompleto.toLowerCase();
+            
+            // RED FLAGS (Sinal Vermelho - Prazos Exíguos & Habilitação Crítica)
+            const vermelho = [];
+            if (txt.includes("3 horas") || txt.includes("2 horas") || txt.includes("duas horas") || txt.includes("três horas") || (txt.includes("prazo") && txt.includes("compras.gov"))) {
+                vermelho.push("<strong>Prazo Exíguo no Sistema:</strong> Apenas 2h a 3h para envio da documentação e proposta ajustada no Compras.gov.br após arrematar.");
+            } else {
+                vermelho.push("<strong>Prazo do Sistema:</strong> Envio imediato da documentação/proposta no portal de compras após arrematar.");
+            }
+
+            if (txt.includes("atestado") || txt.includes("capacidade técnica") || txt.includes("aptidão") || txt.includes("acervo")) {
+                vermelho.push("<strong>Atestado de Capacidade Técnica:</strong> Exige comprovação de aptidão operacional anterior em serviços equivalentes.");
+            } else {
+                vermelho.push("<strong>Atestado de Capacidade Técnica:</strong> Comprovação de aptidão técnica conforme exigência do Termo de Referência.");
+            }
+
+            if (txt.includes("vedada a subcontratação") || txt.includes("não será admitida a subcontratação") || txt.includes("vedação de subcontratação") || txt.includes("proibida a subcontratação")) {
+                vermelho.push("<strong>Vedação de Subcontratação:</strong> Proibida a execução por terceiros não registrados (Art. 122 da Lei 14.133/2021).");
+            } else if (txt.includes("subcontrata")) {
+                vermelho.push("<strong>Subcontratação Regulada:</strong> Verificar percentuais e limites admitidos pelo órgão no edital.");
+            } else {
+                vermelho.push("<strong>Execução Direta:</strong> Execução por equipe própria ou devidamente habilitada.");
+            }
+
+            if (txt.includes("garantia contratual") || txt.includes("garantia de proposta") || txt.includes("garantia de execução") || txt.includes("caução")) {
+                vermelho.push("<strong>Garantia Contratual:</strong> Exigência de garantia de execução (Art. 96 a 102 da Lei 14.133/2021).");
+            }
+
+            // AMBER FLAGS (Sinal Amarelo - Atenção Operacional & Execução)
+            const amarelo = [];
+            if (txt.includes("sustentabilidade") || txt.includes("resíduos") || txt.includes("refrigerante") || txt.includes("fluido") || txt.includes("gás") || txt.includes("logística reversa") || txt.includes("descarte")) {
+                amarelo.push("<strong>Regra de Sustentabilidade:</strong> Recolhimento obrigatório de fluidos/gases e logística reversa de óleos/peças velhas.");
+            } else {
+                amarelo.push("<strong>Regra Ambiental:</strong> Atendimento aos critérios de sustentabilidade e destinação adequada de resíduos.");
+            }
+
+            const matchValidade = textoCompleto.match(/validade(?:\s+da)?(?:\s+proposta)?[:\s]+(\d+)\s*(?:dias)?/i);
+            if (matchValidade) {
+                amarelo.push(`<strong>Validade da Proposta:</strong> Mínimo de ${matchValidade[1]} dias corridos.`);
+            } else {
+                amarelo.push("<strong>Validade da Proposta:</strong> Mínimo de 60 dias corridos.");
+            }
+
+            if (txt.includes("visita técnica") || txt.includes("vistoria") || txt.includes("conhecimento do local")) {
+                amarelo.push("<strong>Vistoria / Visita Técnica:</strong> Verificar se é facultativa mediante declaração formal de conhecimento do local.");
+            }
+
+            if (txt.includes("similar") || txt.includes("marca de referência") || txt.includes("equivalente")) {
+                amarelo.push("<strong>Marcas & Similaridade:</strong> Permitida cotação de marcas de referência ou similar de qualidade comprovada.");
+            }
+
+            // GREEN FLAGS (Sinal Verde - Documentação Regular de Praxe)
+            const verde = [
+                "Cartão CNPJ + CND Federal / INSS regular",
+                "CND Estadual + CND Municipal em dia",
+                "CRF FGTS + CNDT Trabalhista",
+                "Balanço Patrimonial / Certidão Negativa de Falência"
+            ];
+
+            return { vermelho, amarelo, verde };
+        }
+
+        // RENDERIZAR SEMÁFORO DE RISCOS NA ABA 2 E NO RELATÓRIO EXECUTIVO PDF
+        function renderizarRiscosUI(riscos) {
+            const r = riscos || licitacaoAtual.riscos;
+            if (!r) return;
+
+            // Aba 2
+            const elVermelho = document.getElementById('lista-riscos-vermelho');
+            if (elVermelho && r.vermelho && r.vermelho.length) {
+                elVermelho.innerHTML = r.vermelho.map(item => `<li class="flex items-start space-x-1"><span>•</span> <span>${item}</span></li>`).join('');
+            }
+
+            const elAmarelo = document.getElementById('lista-riscos-amarelo');
+            if (elAmarelo && r.amarelo && r.amarelo.length) {
+                elAmarelo.innerHTML = r.amarelo.map(item => `<li class="flex items-start space-x-1"><span>•</span> <span>${item}</span></li>`).join('');
+            }
+
+            const elVerde = document.getElementById('lista-riscos-verde');
+            if (elVerde && r.verde && r.verde.length) {
+                elVerde.innerHTML = r.verde.map(item => `<li>• ${item.replace(/^•\s*/, '')}</li>`).join('');
+            }
+
+            // Relatório Executivo PDF
+            const execVermelho = document.getElementById('exec-riscos-vermelho');
+            if (execVermelho && r.vermelho && r.vermelho.length) {
+                execVermelho.innerHTML = r.vermelho.map(item => `<li>${item.replace(/<\/?strong>/g, '')}</li>`).join('');
+            }
+
+            const execAmarelo = document.getElementById('exec-riscos-amarelo');
+            if (execAmarelo && r.amarelo && r.amarelo.length) {
+                execAmarelo.innerHTML = r.amarelo.map(item => `<li>${item.replace(/<\/?strong>/g, '')}</li>`).join('');
+            }
+
+            const execVerde = document.getElementById('exec-riscos-verde');
+            if (execVerde && r.verde && r.verde.length) {
+                execVerde.innerHTML = r.verde.map(item => `<li>${item.replace(/^•\s*/, '')}</li>`).join('');
+            }
+        }
+
+        // ==========================================
         // LEITURA DE PDFS COM PDF.JS E RESET AUTOMÁTICO
         // ==========================================
         async function processarPDFs(event) {
@@ -1180,15 +1457,19 @@
             const porcentagemStatus = document.getElementById('porcentagem-status');
             const cardAuditoria = document.getElementById('card-confirmacao-auditoria');
             const txtAuditoria = document.getElementById('texto-auditoria-detalhe');
+            const cardAlerta = document.getElementById('card-alerta-tabela');
+            const textoAlerta = document.getElementById('texto-alerta-tabela');
 
             status.classList.remove('hidden');
             if (cardAuditoria) cardAuditoria.classList.add('hidden');
+            if (cardAlerta) cardAlerta.classList.add('hidden');
 
             barraProgresso.style.width = '0%';
             porcentagemStatus.innerText = '0%';
             textoStatus.innerText = 'Iniciando leitura dos arquivos...';
 
             let textoCompleto = '';
+            let todasLinhas = [];
             let totalPaginasGerais = 0;
 
             try {
@@ -1202,14 +1483,17 @@
                     totalPaginasGerais += pdf.numPages;
                 }
 
-                // Passo 2: Processar página a página atualizando barra de progresso
+                // Passo 2: Processar página a página com reconstrução espacial de linhas
                 let paginasProcessadas = 0;
                 for (let i = 0; i < pdfDocs.length; i++) {
                     const doc = pdfDocs[i];
                     for (let p = 1; p <= doc.pdf.numPages; p++) {
                         const page = await doc.pdf.getPage(p);
                         const textContent = await page.getTextContent();
-                        textoCompleto += textContent.items.map(item => item.str).join(' ') + '\n';
+                        const linhasPagina = reconstruirLinhasPagina(textContent);
+                        
+                        todasLinhas.push(...linhasPagina);
+                        textoCompleto += linhasPagina.join('\n') + '\n';
                         paginasProcessadas++;
 
                         const pct = Math.round((paginasProcessadas / totalPaginasGerais) * 100);
@@ -1223,7 +1507,7 @@
                 licitacaoAtual.totalArquivosLidos = files.length;
                 licitacaoAtual.totalPaginasLidas = totalPaginasGerais;
 
-                // REGEX DETECTORES
+                // REGEX DETECTORES DE CABEÇALHO
                 if (textoCompleto.includes("CAPITANIA") || textoCompleto.includes("MARINHA")) {
                     licitacaoAtual.orgao = "Capitania Fluvial do Tietê-Paraná (Marinha do Brasil)";
                 } else {
@@ -1240,22 +1524,70 @@
                 const matchDispensa = textoCompleto.match(/(?:Dispensa|Preg[aã]o|Concorr[eê]ncia)[^\n\r,\.]+/i);
                 if (matchDispensa && !licitacaoAtual.processo) licitacaoAtual.processo = matchDispensa[0].trim();
 
+                const matchVigencia = textoCompleto.match(/vig[eê]ncia(?:\s+do\s+contrato)?[:\s]+(\d+\s*(?:meses|ano|dias))/i);
+                if (matchVigencia) licitacaoAtual.vigencia = matchVigencia[1];
+
+                // DETECÇÃO DE VALOR TETO GLOBAL
+                const matchTeto = textoCompleto.match(/(?:valor\s*total\s*(?:estimado|refer[eê]ncia|global|m[aá]ximo)?|teto\s*total|or[cç]amento\s*estimado)[:\s]+(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})/i);
+                if (matchTeto) {
+                    licitacaoAtual.tetoTotal = tratarNumeroInput(matchTeto[1]);
+                }
+
+                // ==========================================
+                // EXTRAÇÃO ESPECIALISTA DE TABELA DE ITENS
+                // ==========================================
+                const itensExtraidos = extrairTabelaItensDeTexto(todasLinhas, textoCompleto);
+                if (itensExtraidos && itensExtraidos.length > 0) {
+                    licitacaoAtual.itens = itensExtraidos;
+                    if (!licitacaoAtual.tetoTotal || licitacaoAtual.tetoTotal === 0) {
+                        let somaTeto = 0;
+                        itensExtraidos.forEach(it => somaTeto += (it.qtd * it.tetoUnit));
+                        if (somaTeto > 0) licitacaoAtual.tetoTotal = Math.round(somaTeto * 100) / 100;
+                    }
+                }
+
+                // ==========================================
+                // MATRIZ DE RISCOS & DIAGNÓSTICO LEI 14.133
+                // ==========================================
+                const riscosExtraidos = extrairRiscosEDiagnostico(textoCompleto);
+                licitacaoAtual.riscos = riscosExtraidos;
+                renderizarRiscosUI(riscosExtraidos);
+
+                // ATUALIZAR INTERFACE E CÁLCULOS
                 atualizarCamposUI();
+                renderizarTabelaItens();
                 atualizarCalculos();
 
-                // Conclusão com sucesso
+                // Conclusão com sucesso da barra
                 textoStatus.innerText = "Auditoria e leitura concluídas!";
                 barraProgresso.style.width = '100%';
                 porcentagemStatus.innerText = '100%';
 
+                // Exibir card de auditoria conclusiva e card de alerta de tabela
                 setTimeout(() => {
                     status.classList.add('hidden');
+                    
                     if (cardAuditoria && txtAuditoria) {
                         const pluralArq = files.length > 1 ? 'arquivos lidos' : 'arquivo lido';
-                        txtAuditoria.innerHTML = `<strong>${files.length}</strong> ${pluralArq} | <strong>${totalPaginasGerais}</strong> páginas analisadas | <strong>100%</strong> do conteúdo verificado.`;
+                        const qtdItens = itensExtraidos.length > 0 ? `<strong>${itensExtraidos.length}</strong> itens de tabela identificados.` : `<strong>0</strong> itens de tabela identificados.`;
+                        txtAuditoria.innerHTML = `<strong>${files.length}</strong> ${pluralArq} | <strong>${totalPaginasGerais}</strong> páginas analisadas | ${qtdItens}`;
                         cardAuditoria.classList.remove('hidden');
                     }
-                }, 1000);
+
+                    const mencionaTabela = /(?:termo de refer[eê]ncia|planilha or[cç]ament[aá]ria|quadro demonstrativo|rela[cç][aã]o de itens|anexo\s+[iI1]|tabela de pre[cç]os|estimativa de pre[cç]os|especifica[cç][oõ]es dos itens)/i.test(textoCompleto);
+
+                    if (cardAlerta && textoAlerta) {
+                        if (itensExtraidos.length > 0) {
+                            textoAlerta.innerHTML = `Identificados <strong>${itensExtraidos.length} itens</strong> no Termo de Referência. Verifique os valores e marcas na <a href="#" onclick="trocarAba('aba-planilha')" class="underline font-bold text-amber-300">Aba 3 (Planilha & Precificação)</a>.`;
+                            cardAlerta.classList.remove('hidden');
+                        } else if (mencionaTabela) {
+                            textoAlerta.innerHTML = `O edital contém anexos/planilhas orçamentárias. Acesse a <a href="#" onclick="trocarAba('aba-planilha')" class="underline font-bold text-amber-300">Aba 3 (Planilha & Precificação)</a> para adicionar ou ajustar os itens da sua proposta.`;
+                            cardAlerta.classList.remove('hidden');
+                        } else {
+                            cardAlerta.classList.add('hidden');
+                        }
+                    }
+                }, 800);
 
             } catch (err) {
                 alert("Erro ao ler PDF: " + err.message);
