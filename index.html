@@ -238,7 +238,7 @@ na PONTA B e na PONTA C.
         <div class="bg-lbtm-card border border-lbtm-border rounded-2xl max-w-7xl w-full h-[90vh] flex flex-col shadow-2xl overflow-hidden">
             
             <!-- MODAL HEADER -->
-            <div class="flex justify-between items-center px-6 py-3.5 border-b border-lbtm-border bg-slate-900/80">
+            <div class="flex flex-wrap justify-between items-center px-6 py-3.5 border-b border-lbtm-border bg-slate-900/80 gap-3">
                 <div class="flex items-center space-x-3">
                     <span class="text-2xl">📸</span>
                     <div>
@@ -250,6 +250,12 @@ na PONTA B e na PONTA C.
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5">
+                        <label class="text-[11px] text-gray-400 font-semibold whitespace-nowrap hidden sm:inline">Vincular Processo:</label>
+                        <select id="select-vincular-processo-print" onchange="selecionarProcessoParaPrint(this.value)" class="bg-slate-800 border border-slate-700 text-cyan-300 text-xs rounded-lg px-2.5 py-1.5 focus:border-cyan-400 focus:outline-none max-w-[260px]">
+                            <option value="novo">➕ Novo Processo / Cotação Avulsa</option>
+                        </select>
+                    </div>
                     <button onclick="fecharModalConferenciaPrint()" class="text-gray-400 hover:text-white text-lg font-bold p-1 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition">✕</button>
                 </div>
             </div>
@@ -269,8 +275,16 @@ na PONTA B e na PONTA C.
                             <button onclick="resetZoomImagemPrint()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded text-xs" title="Reset Zoom">100%</button>
                         </div>
                     </div>
-                    <div id="container-visualizador-print" class="flex-1 overflow-auto p-4 flex items-start justify-center bg-[#070a0f]">
-                        <img id="img-preview-print" src="" alt="Print do WhatsApp" class="max-w-full h-auto object-contain transition-transform duration-150 origin-top rounded shadow-md border border-slate-700/50">
+                    <div id="container-visualizador-print" class="flex-1 overflow-auto p-4 flex items-center justify-center bg-[#070a0f]">
+                        <div id="placeholder-sem-print" class="text-center p-6 text-gray-500 space-y-3">
+                            <span class="text-4xl block">🖼️</span>
+                            <p class="text-xs text-gray-400 font-semibold">Nenhuma imagem carregada no momento.</p>
+                            <label class="inline-block px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded text-xs font-bold cursor-pointer transition">
+                                📂 Selecionar Print / Imagem
+                                <input type="file" accept="image/*" class="hidden" onchange="processarImagemPrintWhatsApp(event)">
+                            </label>
+                        </div>
+                        <img id="img-preview-print" src="" alt="Print do WhatsApp" class="hidden max-w-full h-auto object-contain transition-transform duration-150 origin-top rounded shadow-md border border-slate-700/50">
                     </div>
                 </div>
 
@@ -408,9 +422,12 @@ na PONTA B e na PONTA C.
                             <span class="text-xs font-bold text-cyan-400 block">📸 Importar Tabela de Print / Cotação WhatsApp</span>
                             <span class="text-[11px] text-gray-400 block">Extração de tabelas, CATSERs, quantidades e preços com OCR</span>
                         </label>
-                        <div class="mt-3 flex items-center justify-center gap-2">
-                            <button type="button" onclick="carregarExemploPrintWhatsApp()" class="px-3 py-1 bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 border border-cyan-500/40 rounded-lg text-[11px] font-bold transition flex items-center gap-1">
-                                <span>⚡</span> Abrir Cotação WhatsApp (Grupo 1)
+                        <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
+                            <button type="button" onclick="carregarExemploPrintWhatsApp()" class="px-3 py-1 bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 border border-cyan-500/40 rounded-lg text-[11px] font-bold transition flex items-center gap-1" title="Carregar Cotação Real do Grupo 1 (R$ 56.556,29)">
+                                <span>⚡</span> Cotação Grupo 1 (R$ 56.556,29)
+                            </button>
+                            <button type="button" onclick="abrirModalConferenciaEmBranco()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-gray-300 border border-slate-700 rounded-lg text-[11px] font-semibold transition flex items-center gap-1" title="Abrir modal em branco sem dados pré-carregados">
+                                <span>📋</span> Painel em Branco
                             </button>
                         </div>
                     </div>
@@ -693,8 +710,7 @@ na PONTA B e na PONTA C.
 
                     <div class="flex items-center flex-wrap gap-2">
                         <div class="relative">
-                            <span class="absolute left-3 top-2.5 text-xs text-gray-400 font-bold">R$</span>
-                            <input type="text" id="input-meta-valor" placeholder="Ex: 46.000,00" class="pl-9 pr-3 py-2 bg-lbtm-bg border border-emerald-500/50 rounded-lg text-emerald-300 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 w-44">
+                            <input type="text" id="input-meta-valor" oninput="mascaraMoedaBRL(this)" placeholder="R$ 0,00" class="px-3 py-2 bg-lbtm-bg border border-emerald-500/50 rounded-lg text-emerald-300 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 w-44 text-right">
                         </div>
                         <button type="button" onclick="aplicarMetaValorFechado()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-bold text-xs rounded-lg transition shadow-lg shadow-emerald-900/40 flex items-center gap-1.5">
                             <span>⚡</span> Aplicar Meta R$
@@ -1287,23 +1303,38 @@ na PONTA B e na PONTA C.
         // Proibido criar elementos visuais na Ponta A sem as Pontas B e C sincronizadas.
         // =========================================================================
 
-        // HELPER DE FORMATAÇÃO MONETÁRIA BRASILEIRA (R$ X.XXX,XX)
+        // HELPER DE FORMATAÇÃO MONETÁRIA BRASILEIRA COM INTL (R$ X.XXX,XX)
+        const formatadorMoedaBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
         function formatarMoeda(valor) {
             const num = Number(valor) || 0;
-            return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return formatadorMoedaBRL.format(num);
         }
 
-        // HELPER DE FORMATAÇÃO NUMÉRICA SEM 'R$' (X.XXX,XX) PARA CÉLULAS DA PROPOSTA A4
+        // HELPER DE FORMATAÇÃO NUMÉRICA COM CASAS DECIMAIS E VÍRGULA (X.XXX,XX)
         function formatarNumeroBR(valor) {
             const num = Number(valor) || 0;
             return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
-        // PARSE DE NÚMEROS COM SUPORTE A VÍRGULA E PONTO (PADRÃO BRASILEIRO)
+        // MÁSCARA DINÂMICA MONETÁRIA BRL EM TEMPO REAL
+        function mascaraMoedaBRL(input) {
+            if (!input) return;
+            let digits = input.value.replace(/\D/g, '');
+            if (!digits) {
+                input.value = '';
+                return;
+            }
+            let valNum = parseFloat(digits) / 100;
+            input.value = formatadorMoedaBRL.format(valNum);
+        }
+
+        // PARSE DE NÚMEROS COM SUPORTE A FORMATO BR, R$, PONTO E VÍRGULA
         function tratarNumeroInput(val) {
             if (typeof val === 'number') return isNaN(val) ? 0 : val;
             if (!val) return 0;
             let str = val.toString().trim();
+            str = str.replace(/R\$\s*/gi, '').replace(/\s+/g, '');
             if (str.includes(',')) {
                 str = str.replace(/\./g, '').replace(',', '.');
             }
@@ -1888,7 +1919,7 @@ na PONTA B e na PONTA C.
         // =========================================================================
         // PURGA TOTAL DE DADOS & RESET DA SESSÃO ATIVA (SEM TEXTOS GENÉRICOS)
         // =========================================================================
-        function purgarEstadoAtivo() {
+        function purgarMemoriaAtiva() {
             licitacaoAtual = {
                 id: 'lbtm-' + Date.now(),
                 orgao: '',
@@ -1917,11 +1948,24 @@ na PONTA B e na PONTA C.
                 ]
             };
 
+            // Limpa variáveis temporárias de OCR e conferência
+            tabelaConferenciaTemp = [];
+            itemCorrelacionadoHistorico = null;
+
             // Limpar inputs de arquivo
             const pdfInput = document.getElementById('pdf-input');
             if (pdfInput) pdfInput.value = '';
             const printInput = document.getElementById('print-input');
             if (printInput) printInput.value = '';
+
+            // Limpar preview de imagem do print no modal
+            const imgPreview = document.getElementById('img-preview-print');
+            if (imgPreview) {
+                imgPreview.src = '';
+                imgPreview.classList.add('hidden');
+            }
+            const placeholderSemPrint = document.getElementById('placeholder-sem-print');
+            if (placeholderSemPrint) placeholderSemPrint.classList.remove('hidden');
 
             // Limpar explicitamente inputs no DOM
             const orgaoEl = document.getElementById('info-orgao');
@@ -1971,8 +2015,12 @@ na PONTA B e na PONTA C.
             atualizarStatusAutoSave("Tela Limpa");
         }
 
+        function purgarEstadoAtivo() {
+            purgarMemoriaAtiva();
+        }
+
         function resetProcessoData(limparInput = true) {
-            purgarEstadoAtivo();
+            purgarMemoriaAtiva();
         }
 
         // =========================================================================
@@ -2203,19 +2251,77 @@ na PONTA B e na PONTA C.
 
         let itemCorrelacionadoHistorico = null;
 
+        function abrirModalConferenciaEmBranco() {
+            tabelaConferenciaTemp = [];
+            itemCorrelacionadoHistorico = null;
+            abrirModalConferenciaPrint('', []);
+        }
+
         function abrirModalConferenciaPrint(imgSrc, listaItens) {
             const modal = document.getElementById('modal-conferencia-print');
             const imgEl = document.getElementById('img-preview-print');
-            if (imgEl && imgSrc) imgEl.src = imgSrc;
+            const placeholderEl = document.getElementById('placeholder-sem-print');
             
-            tabelaConferenciaTemp = (listaItens && listaItens.length) ? JSON.parse(JSON.stringify(listaItens)) : JSON.parse(JSON.stringify(ITENS_PADRAO_WHATSAPP_GRUPO1));
+            if (imgEl) {
+                if (imgSrc) {
+                    imgEl.src = imgSrc;
+                    imgEl.classList.remove('hidden');
+                    if (placeholderEl) placeholderEl.classList.add('hidden');
+                } else {
+                    imgEl.src = '';
+                    imgEl.classList.add('hidden');
+                    if (placeholderEl) placeholderEl.classList.remove('hidden');
+                }
+            }
+            
+            tabelaConferenciaTemp = (listaItens && Array.isArray(listaItens)) ? JSON.parse(JSON.stringify(listaItens)) : [];
             resetZoomImagemPrint();
             renderizarTabelaConferenciaPrint();
             
-            // Dispara algoritmo de correlação automática com a Gaveta de Histórico
+            // Popula e sincroniza o dropdown de processos da Gaveta
+            popularSelectProcessosPrint();
             verificarCorrelacaoComHistorico(tabelaConferenciaTemp);
 
             if (modal) modal.classList.remove('hidden');
+        }
+
+        function popularSelectProcessosPrint() {
+            const sel = document.getElementById('select-vincular-processo-print');
+            if (!sel) return;
+
+            const gaveta = carregarGavetaStorage();
+            sel.innerHTML = `<option value="novo">➕ Novo Processo / Cotação Avulsa</option>`;
+            
+            gaveta.forEach((lic, idx) => {
+                if (!lic) return;
+                const id = lic.id || ('gaveta-' + idx);
+                const titulo = `${lic.orgao || 'Sem Órgão'} — ${lic.processo || 'Sem Processo'}`;
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = titulo.substring(0, 45);
+                sel.appendChild(opt);
+            });
+        }
+
+        function selecionarProcessoParaPrint(id) {
+            if (id === 'novo') {
+                licitacaoAtual.orgao = 'Cotação / Licitação WhatsApp';
+                licitacaoAtual.processo = 'Grupo 1 — Climatização & Manutenção';
+                licitacaoAtual.uasg = '';
+                licitacaoAtual.local = '';
+                licitacaoAtual.vigencia = '12 Meses';
+            } else {
+                const gaveta = carregarGavetaStorage();
+                const item = gaveta.find(g => g.id === id);
+                if (item) {
+                    licitacaoAtual.orgao = item.orgao || '';
+                    licitacaoAtual.processo = item.processo || '';
+                    licitacaoAtual.uasg = item.uasg || '';
+                    licitacaoAtual.local = item.local || '';
+                    licitacaoAtual.vigencia = item.vigencia || '12 Meses';
+                }
+            }
+            atualizarCamposUI();
         }
 
         function fecharModalConferenciaPrint() {
@@ -2231,6 +2337,21 @@ na PONTA B e na PONTA C.
             if (numAuditEl) numAuditEl.innerText = tabelaConferenciaTemp.length;
 
             corpo.innerHTML = '';
+
+            if (tabelaConferenciaTemp.length === 0) {
+                corpo.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="p-8 text-center text-gray-500 text-xs">
+                            <span class="text-2xl block mb-2">📋</span>
+                            Nenhum item carregado no momento.<br>
+                            Selecione uma imagem de print do WhatsApp ou clique em <strong>➕ Nova Linha</strong> acima.
+                        </td>
+                    </tr>
+                `;
+                recalcularTotaisConferenciaPrint();
+                return;
+            }
+
             tabelaConferenciaTemp.forEach((it, idx) => {
                 const subTotal = (Number(it.qtd) || 0) * (Number(it.tetoUnit) || 0);
                 const tr = document.createElement('tr');
@@ -2252,9 +2373,9 @@ na PONTA B e na PONTA C.
                         <input type="number" min="1" value="${it.qtd || 1}" onchange="atualizarItemConferencia(${idx}, 'qtd', this.value)" class="w-11 bg-slate-950 border border-slate-700 rounded px-1 text-center text-xs font-bold text-white">
                     </td>
                     <td class="p-1.5 text-right">
-                        <input type="text" value="${formatarNumeroBR(it.tetoUnit || 0)}" onchange="atualizarItemConferencia(${idx}, 'tetoUnit', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-1 text-right text-xs font-bold text-emerald-400">
+                        <input type="text" value="${formatarNumeroBR(it.tetoUnit || 0)}" onchange="atualizarItemConferencia(${idx}, 'tetoUnit', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-1 text-right text-xs font-bold text-emerald-400 font-mono">
                     </td>
-                    <td class="p-1.5 text-right font-bold text-emerald-300 text-xs">
+                    <td class="p-1.5 text-right font-bold text-emerald-300 text-xs font-mono">
                         ${formatarMoeda(subTotal)}
                     </td>
                     <td class="p-1.5 text-center">
@@ -2450,14 +2571,14 @@ na PONTA B e na PONTA C.
         // =========================================================================
         function aplicarMetaValorPredefinido(valor) {
             const inputMeta = document.getElementById('input-meta-valor');
-            if (inputMeta) inputMeta.value = formatarNumeroBR(valor);
+            if (inputMeta) inputMeta.value = formatadorMoedaBRL.format(valor);
             aplicarMetaValorFechado();
         }
 
         function aplicarMetaValorFechado() {
             const inputMeta = document.getElementById('input-meta-valor');
             if (!inputMeta || !inputMeta.value.trim()) {
-                alert("Digite um valor meta em R$ (ex: 46.000,00 ou 50.000,00).");
+                alert("Digite um valor meta em R$ (ex: R$ 46.000,00 ou R$ 50.000,00).");
                 return;
             }
 
@@ -2514,6 +2635,9 @@ na PONTA B e na PONTA C.
             const descontoPercentual = ((tetoTotal - valorMeta) / tetoTotal) * 100;
             const inputDesc = document.getElementById('input-desconto-geral');
             if (inputDesc) inputDesc.value = Math.max(0, descontoPercentual).toFixed(2);
+
+            // Mantém o input formatado no padrão BRL (R$ X.XXX,XX)
+            inputMeta.value = formatadorMoedaBRL.format(valorMeta);
 
             renderizarTabelaItens();
             atualizarCalculos(false);
@@ -3303,13 +3427,13 @@ na PONTA B e na PONTA C.
                 tr.className = "hover:bg-lbtm-card/50 transition";
                 tr.innerHTML = `
                     <td class="p-2 font-bold text-gray-400">${it.item}</td>
-                    <td class="p-2"><input type="text" value="${it.desc}" onchange="atualizarItem(${idx}, 'desc', this.value)" class="w-full bg-transparent border-b border-gray-700 p-1 text-white text-xs focus:outline-none focus:border-emerald-500"></td>
-                    <td class="p-2"><input type="text" value="${it.qtd}" onchange="atualizarItem(${idx}, 'qtd', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-white text-xs text-center focus:outline-none focus:border-emerald-500"></td>
-                    <td class="p-2"><input type="text" value="${it.tetoUnit}" onchange="atualizarItem(${idx}, 'tetoUnit', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-gray-400 text-xs focus:outline-none focus:border-emerald-500"></td>
-                    <td class="p-2"><input type="text" value="${it.marca}" onchange="atualizarItem(${idx}, 'marca', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-emerald-400 font-semibold text-xs focus:outline-none focus:border-emerald-500"></td>
-                    <td class="p-2"><input type="text" value="${it.precoUnit}" onchange="atualizarItem(${idx}, 'precoUnit', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-emerald-400 font-bold text-xs focus:outline-none focus:border-emerald-500"></td>
-                    <td class="p-2 font-bold text-white text-right whitespace-nowrap">${formatarMoeda(subtotal)}</td>
-                    <td class="p-2 text-center"><button onclick="removerItem(${idx})" class="text-red-400 hover:text-red-300">✕</button></td>
+                    <td class="p-2"><input type="text" value="${it.desc || ''}" onchange="atualizarItem(${idx}, 'desc', this.value)" class="w-full bg-transparent border-b border-gray-700 p-1 text-white text-xs focus:outline-none focus:border-emerald-500"></td>
+                    <td class="p-2"><input type="number" min="1" value="${it.qtd || 1}" onchange="atualizarItem(${idx}, 'qtd', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-white text-xs text-center focus:outline-none focus:border-emerald-500 font-bold"></td>
+                    <td class="p-2"><input type="text" value="${formatarNumeroBR(it.tetoUnit || 0)}" onchange="atualizarItem(${idx}, 'tetoUnit', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-gray-300 text-xs text-right focus:outline-none focus:border-emerald-500 font-mono"></td>
+                    <td class="p-2"><input type="text" value="${it.marca || 'Conforme TR'}" onchange="atualizarItem(${idx}, 'marca', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-emerald-400 font-semibold text-xs focus:outline-none focus:border-emerald-500"></td>
+                    <td class="p-2"><input type="text" value="${formatarNumeroBR(it.precoUnit || 0)}" onchange="atualizarItem(${idx}, 'precoUnit', this.value)" class="w-full bg-lbtm-bg border border-lbtm-border rounded p-1 text-emerald-400 font-bold text-xs text-right focus:outline-none focus:border-emerald-500 font-mono"></td>
+                    <td class="p-2 font-bold text-emerald-300 text-right whitespace-nowrap font-mono">${formatarMoeda(subtotal)}</td>
+                    <td class="p-2 text-center"><button onclick="removerItem(${idx})" class="text-red-400 hover:text-red-300 font-bold" title="Remover item">✕</button></td>
                 `;
                 corpo.appendChild(tr);
             });
