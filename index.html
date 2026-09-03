@@ -188,10 +188,28 @@ na PONTA B e na PONTA C.
                 border: 1px solid #d1d5db !important;
             }
             tfoot {
-                display: table-footer-group !important;
+                display: none !important;
+            }
+            .linha-total-final {
+                page-break-inside: avoid !important;
             }
             
-            /* REMOVE QUALQUER ÍCONE OU MARCA D'ÁGUA QUE POSSA SOBREPOR A PÁGINA 2 */
+            /* REMOÇÃO TOTAL DE MARCAS D'ÁGUA, ÍCONES E ARTEFATOS NA PÁGINA 2 */
+            #a4-proposta *, #folha-proposta-a4 *, .a4-table *, .a4-table th, .a4-table td, #folha-proposta-a4 table th, #folha-proposta-a4 table td {
+                background-image: none !important;
+                filter: none !important;
+            }
+            .a4-table th::before, .a4-table th::after,
+            .a4-table td::before, .a4-table td::after,
+            #folha-proposta-a4 table th::before, #folha-proposta-a4 table th::after,
+            #folha-proposta-a4 table td::before, #folha-proposta-a4 table td::after,
+            #aba-proposta th::before, #aba-proposta th::after,
+            #aba-proposta td::before, #aba-proposta td::after {
+                content: none !important;
+                display: none !important;
+                background: none !important;
+                background-image: none !important;
+            }
             #a4-logo-container, #exec-logo-container {
                 page-break-inside: avoid;
             }
@@ -1006,14 +1024,8 @@ na PONTA B e na PONTA C.
                             </tr>
                         </thead>
                         <tbody id="a4-tabela-corpo">
-                            <!-- Preenchido via JS com formatarNumeroBR() -->
+                            <!-- Preenchido via JS com formatarNumeroBR() e linha total unica no final do tbody -->
                         </tbody>
-                        <tfoot>
-                            <tr class="font-bold bg-gray-50 text-gray-900">
-                                <td colspan="5" class="p-2.5 text-right border border-gray-300">VALOR TOTAL DA PROPOSTA:</td>
-                                <td id="a4-valor-total" class="p-2.5 text-right border border-gray-300 text-[13px] font-bold text-emerald-800">R$ 0,00</td>
-                            </tr>
-                        </tfoot>
                     </table>
                 </div>
 
@@ -3932,7 +3944,7 @@ ${itensTexto}
             if (licitacaoAtual.itens.length === 0) {
                 corpo.innerHTML = `
                     <tr>
-                        <td colspan="6" class="p-3 text-center text-gray-500 border border-gray-300">
+                        <td colspan="6" class="p-4 text-center text-gray-500 border border-gray-300">
                             Nenhum item cotado nesta proposta.
                         </td>
                     </tr>
@@ -3953,9 +3965,16 @@ ${itensTexto}
                     `;
                     corpo.appendChild(tr);
                 });
-            }
 
-            document.getElementById('a4-valor-total').innerText = formatarMoeda(total);
+                // LINHA TOTAL DA PROPOSTA INSERIDA COMO ÚLTIMA LINHA DO TBODY (SEM REPETIÇÃO DE TFOOT ENTRE PÁGINAS)
+                const trTotal = document.createElement('tr');
+                trTotal.className = "linha-total-final font-bold bg-gray-50 text-gray-900 border-t-2 border-gray-400 text-[12px]";
+                trTotal.innerHTML = `
+                    <td colspan="5" class="p-2.5 text-right border border-gray-300 font-bold uppercase tracking-wide">VALOR TOTAL DA PROPOSTA:</td>
+                    <td id="a4-valor-total" class="p-2.5 text-right border border-gray-300 text-[13px] font-bold text-emerald-800 font-mono">${formatarMoeda(total)}</td>
+                `;
+                corpo.appendChild(trTotal);
+            }
 
             // CAMPOS DINÂMICOS OPCIONAIS NA PROPOSTA A4
             const containerAdic = document.getElementById('a4-container-adicionais');
