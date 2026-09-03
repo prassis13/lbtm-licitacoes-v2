@@ -135,18 +135,49 @@ na PONTA B e na PONTA C.
                 padding: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
+                font-size: 12px !important;
             }
             
             .card, .diagnostic-box, .box-risco {
                 padding: 8px 12px !important;
                 margin-bottom: 8px !important;
-                font-size: 11.5px !important;
+                font-size: 12px !important;
             }
-            table { width: 100% !important; border-collapse: collapse !important; font-size: 11px !important; page-break-inside: auto; }
-            tr { page-break-inside: avoid; page-break-after: auto; }
-            th, td { padding: 4.5px 6px !important; }
-            thead { display: table-header-group; }
-            tfoot { display: table-footer-group; }
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 12px !important;
+                page-break-inside: auto;
+            }
+            tr {
+                page-break-inside: avoid !important;
+                page-break-after: auto;
+            }
+            th, td {
+                padding: 8px 10px !important;
+                font-size: 12px !important;
+                line-height: 1.35 !important;
+            }
+            thead {
+                display: table-header-group !important;
+            }
+            thead tr th {
+                background-color: #f3f4f6 !important;
+                color: #111827 !important;
+                font-weight: 700 !important;
+                border: 1px solid #d1d5db !important;
+            }
+            tfoot {
+                display: table-footer-group !important;
+            }
+            
+            /* REMOVE QUALQUER ÍCONE OU MARCA D'ÁGUA QUE POSSA SOBREPOR A PÁGINA 2 */
+            #a4-logo-container, #exec-logo-container {
+                page-break-inside: avoid;
+            }
+            .marca-dagua, .watermark, .icone-decorativo {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -931,15 +962,15 @@ na PONTA B e na PONTA C.
                 <!-- TABELA PROPOSTA A4 (COM FORMATO PADRÃO E SEM 'R$' REPETITIVO NAS CÉLULAS) -->
                 <div>
                     <h3 class="font-bold border-b border-gray-400 pb-1 mb-2 text-gray-900 text-[12px] uppercase tracking-wide">PLANILHA DE PREÇOS PROPOSTOS</h3>
-                    <table class="w-full text-left border-collapse border border-gray-300 text-[11.5px]">
+                    <table class="w-full text-left border-collapse border border-gray-300 text-[12px]">
                         <thead>
-                            <tr class="bg-gray-100 text-gray-800 border-b border-gray-300">
-                                <th class="p-1.5 border border-gray-300 text-center w-10">Item</th>
-                                <th class="p-1.5 border border-gray-300">Descrição do Serviço / Fornecimento</th>
-                                <th class="p-1.5 border border-gray-300 w-12 text-center">Qtd</th>
-                                <th class="p-1.5 border border-gray-300 w-28">Marca</th>
-                                <th class="p-1.5 border border-gray-300 w-24 text-right">Unit. (R$)</th>
-                                <th class="p-1.5 border border-gray-300 w-28 text-right">Total (R$)</th>
+                            <tr class="bg-gray-100 text-gray-800 border-b border-gray-300 font-bold">
+                                <th class="p-2 border border-gray-300 text-center w-10">Item</th>
+                                <th class="p-2 border border-gray-300">Descrição do Serviço / Fornecimento</th>
+                                <th class="p-2 border border-gray-300 w-12 text-center">Qtd</th>
+                                <th class="p-2 border border-gray-300 w-28">Marca</th>
+                                <th class="p-2 border border-gray-300 w-24 text-right">Unit. (R$)</th>
+                                <th class="p-2 border border-gray-300 w-28 text-right">Total (R$)</th>
                             </tr>
                         </thead>
                         <tbody id="a4-tabela-corpo">
@@ -947,8 +978,8 @@ na PONTA B e na PONTA C.
                         </tbody>
                         <tfoot>
                             <tr class="font-bold bg-gray-50 text-gray-900">
-                                <td colspan="5" class="p-2 text-right border border-gray-300">VALOR TOTAL DA PROPOSTA:</td>
-                                <td id="a4-valor-total" class="p-2 text-right border border-gray-300 text-[13px] font-bold text-emerald-800">R$ 0,00</td>
+                                <td colspan="5" class="p-2.5 text-right border border-gray-300">VALOR TOTAL DA PROPOSTA:</td>
+                                <td id="a4-valor-total" class="p-2.5 text-right border border-gray-300 text-[13px] font-bold text-emerald-800">R$ 0,00</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -1343,6 +1374,9 @@ na PONTA B e na PONTA C.
         }
 
         // ESTADO GLOBAL DA APLICAÇÃO (VAZIO POR PADRÃO)
+        let matrizOCR = null;
+        let cache_ocr = null;
+
         let licitacaoAtual = {
             id: '',
             orgao: '',
@@ -1949,6 +1983,8 @@ na PONTA B e na PONTA C.
             };
 
             // Limpa variáveis temporárias de OCR e conferência
+            matrizOCR = null;
+            cache_ocr = null;
             tabelaConferenciaTemp = [];
             itemCorrelacionadoHistorico = null;
 
@@ -2252,6 +2288,8 @@ na PONTA B e na PONTA C.
         let itemCorrelacionadoHistorico = null;
 
         function abrirModalConferenciaEmBranco() {
+            matrizOCR = null;
+            cache_ocr = null;
             tabelaConferenciaTemp = [];
             itemCorrelacionadoHistorico = null;
             abrirModalConferenciaPrint('', []);
@@ -3702,14 +3740,14 @@ ${itensTexto}
                     const sub = (it.qtd * it.precoUnit) || 0;
                     total += sub;
                     const tr = document.createElement('tr');
-                    tr.className = "border-b border-gray-300";
+                    tr.className = "border-b border-gray-300 text-[12px]";
                     tr.innerHTML = `
-                        <td class="p-1 border border-gray-300 font-bold text-center">${it.item}</td>
-                        <td class="p-1 border border-gray-300">${it.desc}</td>
-                        <td class="p-1 border border-gray-300 text-center">${it.qtd}</td>
-                        <td class="p-1 border border-gray-300">${it.marca}</td>
-                        <td class="p-1 border border-gray-300 text-right">${formatarNumeroBR(it.precoUnit)}</td>
-                        <td class="p-1 border border-gray-300 text-right font-bold">${formatarNumeroBR(sub)}</td>
+                        <td class="p-2 border border-gray-300 font-bold text-center">${it.item}</td>
+                        <td class="p-2 border border-gray-300 leading-snug">${it.desc}</td>
+                        <td class="p-2 border border-gray-300 text-center font-bold">${it.qtd}</td>
+                        <td class="p-2 border border-gray-300 text-gray-700">${it.marca || 'Conforme TR'}</td>
+                        <td class="p-2 border border-gray-300 text-right font-mono">${formatarNumeroBR(it.precoUnit)}</td>
+                        <td class="p-2 border border-gray-300 text-right font-bold text-gray-900 font-mono">${formatarNumeroBR(sub)}</td>
                     `;
                     corpo.appendChild(tr);
                 });
