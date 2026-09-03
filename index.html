@@ -239,7 +239,7 @@ na PONTA B e na PONTA C.
                 <button onclick="document.getElementById('import-lbtm-file').click()" class="px-3 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-400 border border-cyan-500/30 rounded-lg text-xs font-bold flex items-center gap-1.5 transition" title="Carregar arquivo .lbtm do computador">
                     📤 Importar
                 </button>
-                <input type="file" id="import-lbtm-file" accept=".lbtm,.json" class="hidden" onchange="importarArquivoLBTM(event)">
+                <input type="file" id="import-lbtm-file" multiple="true" accept=".lbtm,.json" class="hidden" onchange="importarArquivoLBTM(event)">
                 <button onclick="exportarRelatorioWhatsapp()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-black font-bold rounded-lg text-xs flex items-center gap-1.5 transition shadow-lg shadow-emerald-900/30">
                     📲 WhatsApp
                 </button>
@@ -314,25 +314,37 @@ na PONTA B e na PONTA C.
             <!-- MODAL BODY: DIVISÃO VERTICAL (SPLIT SCREEN) -->
             <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden">
                 
-                <!-- COLUNA ESQUERDA: IMAGEM ORIGINAL COM ZOOM / PAN (5 COLUNAS) -->
+                <!-- COLUNA ESQUERDA: IMAGEM ORIGINAL COM ZOOM / PAN / GALERIA DE PRINTS (5 COLUNAS) -->
                 <div class="lg:col-span-5 bg-black/60 border-b lg:border-b-0 lg:border-r border-lbtm-border flex flex-col h-full overflow-hidden">
-                    <div class="p-2.5 border-b border-lbtm-border/60 bg-slate-950/60 flex justify-between items-center text-xs">
-                        <span class="font-bold text-gray-300 flex items-center gap-1.5">
-                            <span>🔍</span> Imagem Original
-                        </span>
+                    <div class="p-2.5 border-b border-lbtm-border/60 bg-slate-950/60 flex flex-wrap justify-between items-center text-xs gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-gray-300 flex items-center gap-1.5">
+                                <span>🔍</span> Imagem Original
+                            </span>
+                            <label class="px-2 py-0.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded text-xs font-semibold cursor-pointer transition flex items-center gap-1" title="Adicionar Parte 2 ou mais prints">
+                                <span>➕</span> Mais Prints
+                                <input type="file" multiple="true" accept="image/*,.png,.jpg,.jpeg" class="hidden" onchange="processarImagemPrintWhatsApp(event)">
+                            </label>
+                        </div>
                         <div class="flex items-center gap-1">
                             <button onclick="zoomImagemPrint(1.2)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded text-xs" title="Aumentar Zoom">🔍+</button>
                             <button onclick="zoomImagemPrint(0.8)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded text-xs" title="Diminuir Zoom">🔍-</button>
                             <button onclick="resetZoomImagemPrint()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded text-xs" title="Reset Zoom">100%</button>
                         </div>
                     </div>
+
+                    <!-- ABAS DE NAVEGAÇÃO ENTRE PRINTS MULTI-PARTES -->
+                    <div id="container-abas-prints" class="p-2 border-b border-lbtm-border/40 bg-slate-900/60 flex items-center gap-1.5 overflow-x-auto hidden">
+                        <!-- Botões de abas gerados dinamicamente via JS -->
+                    </div>
+
                     <div id="container-visualizador-print" class="flex-1 overflow-auto p-4 flex items-center justify-center bg-[#070a0f]">
                         <div id="placeholder-sem-print" class="text-center p-6 text-gray-500 space-y-3">
                             <span class="text-4xl block">🖼️</span>
                             <p class="text-xs text-gray-400 font-semibold">Nenhuma imagem carregada no momento.</p>
                             <label class="inline-block px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded text-xs font-bold cursor-pointer transition">
-                                📂 Selecionar Print / Imagem
-                                <input type="file" accept="image/*" class="hidden" onchange="processarImagemPrintWhatsApp(event)">
+                                📂 Selecionar Print(s) / Imagens
+                                <input type="file" multiple="true" accept="image/*,.png,.jpg,.jpeg" class="hidden" onchange="processarImagemPrintWhatsApp(event)">
                             </label>
                         </div>
                         <img id="img-preview-print" src="" alt="Print do WhatsApp" class="hidden max-w-full h-auto object-contain transition-transform duration-150 origin-top rounded shadow-md border border-slate-700/50">
@@ -457,7 +469,7 @@ na PONTA B e na PONTA C.
                     
                     <!-- OPÇÃO A: DROPZONE PDF -->
                     <div id="dropzone-pdf" class="border-2 border-dashed border-lbtm-border rounded-xl p-6 text-center hover:border-emerald-500/50 transition bg-lbtm-bg/50 flex flex-col justify-center items-center">
-                        <input type="file" id="pdf-input" multiple accept="application/pdf" class="hidden" onchange="processarPDFs(event)">
+                        <input type="file" id="pdf-input" multiple="true" accept="application/pdf" class="hidden" onchange="processarPDFs(event)">
                         <label for="pdf-input" class="cursor-pointer space-y-2 block w-full">
                             <div class="text-3xl">📄</div>
                             <span class="text-xs font-bold text-emerald-400 block">Upload de PDFs Oficiais do Edital</span>
@@ -466,12 +478,12 @@ na PONTA B e na PONTA C.
                     </div>
 
                     <!-- OPÇÃO B: IMPORTAR PRINT DO WHATSAPP COM OCR -->
-                    <div class="border-2 border-dashed border-cyan-500/30 hover:border-cyan-400/60 rounded-xl p-6 text-center transition bg-slate-900/60 flex flex-col justify-center items-center relative overflow-hidden">
-                        <input type="file" id="print-input" accept="image/*,.png,.jpg,.jpeg" class="hidden" onchange="processarImagemPrintWhatsApp(event)">
+                    <div id="dropzone-print" class="border-2 border-dashed border-cyan-500/30 hover:border-cyan-400/60 rounded-xl p-6 text-center transition bg-slate-900/60 flex flex-col justify-center items-center relative overflow-hidden">
+                        <input type="file" id="print-input" multiple="true" accept="image/*,.png,.jpg,.jpeg" class="hidden" onchange="processarImagemPrintWhatsApp(event)">
                         <label for="print-input" class="cursor-pointer space-y-2 block w-full">
                             <div class="text-3xl">📸</div>
-                            <span class="text-xs font-bold text-cyan-400 block">📸 Importar Tabela de Print / Cotação WhatsApp</span>
-                            <span class="text-[11px] text-gray-400 block">Extração de tabelas, CATSERs, quantidades e preços com OCR</span>
+                            <span class="text-xs font-bold text-cyan-400 block">📸 Importar Print(s) / Cotação WhatsApp (Partes 1, 2...)</span>
+                            <span class="text-[11px] text-gray-400 block">Seleção múltipla de prints com concatenação automática de tabelas</span>
                         </label>
                         <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
                             <button type="button" onclick="carregarExemploPrintWhatsApp()" class="px-3 py-1 bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 border border-cyan-500/40 rounded-lg text-[11px] font-bold transition flex items-center gap-1" title="Carregar Cotação Real do Grupo 1 (R$ 56.556,29)">
@@ -1460,6 +1472,25 @@ na PONTA B e na PONTA C.
                 });
             }
 
+            const dropzonePrintEl = document.getElementById('dropzone-print');
+            if (dropzonePrintEl) {
+                dropzonePrintEl.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropzonePrintEl.classList.add('border-cyan-400', 'bg-cyan-950/40');
+                });
+                dropzonePrintEl.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    dropzonePrintEl.classList.remove('border-cyan-400', 'bg-cyan-950/40');
+                });
+                dropzonePrintEl.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropzonePrintEl.classList.remove('border-cyan-400', 'bg-cyan-950/40');
+                    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+                        processarImagemPrintWhatsApp({ target: { files: e.dataTransfer.files } });
+                    }
+                });
+            }
+
             // AUTO-RECOVERY: Recuperação de Emergência
             let recuperado = false;
             try {
@@ -2006,6 +2037,8 @@ na PONTA B e na PONTA C.
             matrizOCR = null;
             cache_ocr = null;
             tabelaConferenciaTemp = [];
+            imagensConferenciaPrint = [];
+            indiceImagemAtivaPrint = 0;
             itemCorrelacionadoHistorico = null;
 
             // Limpar inputs de arquivo
@@ -2022,6 +2055,11 @@ na PONTA B e na PONTA C.
             }
             const placeholderSemPrint = document.getElementById('placeholder-sem-print');
             if (placeholderSemPrint) placeholderSemPrint.classList.remove('hidden');
+            const containerAbas = document.getElementById('container-abas-prints');
+            if (containerAbas) {
+                containerAbas.innerHTML = '';
+                containerAbas.classList.add('hidden');
+            }
 
             // Limpar explicitamente inputs no DOM
             const orgaoEl = document.getElementById('info-orgao');
@@ -2177,6 +2215,8 @@ na PONTA B e na PONTA C.
 
         let tabelaConferenciaTemp = [];
         let zoomNivelAtualPrint = 1.0;
+        let imagensConferenciaPrint = [];
+        let indiceImagemAtivaPrint = 0;
 
         function carregarExemploPrintWhatsApp() {
             const canvas = document.createElement('canvas');
@@ -2206,57 +2246,104 @@ na PONTA B e na PONTA C.
             });
 
             const demoDataUrl = canvas.toDataURL();
-            abrirModalConferenciaPrint(demoDataUrl, JSON.parse(JSON.stringify(ITENS_PADRAO_WHATSAPP_GRUPO1)));
+            abrirModalConferenciaPrint([{ name: 'Cotação Grupo 1', url: demoDataUrl }], JSON.parse(JSON.stringify(ITENS_PADRAO_WHATSAPP_GRUPO1)));
         }
 
         async function processarImagemPrintWhatsApp(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+            const rawFiles = (event && event.target && event.target.files) ? event.target.files : ((event && event.files) ? event.files : event);
+            const files = Array.from(rawFiles || []);
+            if (!files || files.length === 0) return;
 
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const dataUrl = e.target.result;
-                
-                const statusLeitura = document.getElementById('status-leitura');
-                const textoStatus = document.getElementById('texto-status');
-                const barraProgresso = document.getElementById('barra-progresso');
-                const porcentagemStatus = document.getElementById('porcentagem-status');
-                
-                if (statusLeitura) statusLeitura.classList.remove('hidden');
-                if (textoStatus) textoStatus.innerHTML = `<div class="spinner w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin inline-block mr-1"></div> Analisando tabela de print / OCR WhatsApp...`;
-                if (barraProgresso) barraProgresso.style.width = '35%';
-                if (porcentagemStatus) porcentagemStatus.innerText = '35%';
+            const statusLeitura = document.getElementById('status-leitura');
+            const textoStatus = document.getElementById('texto-status');
+            const barraProgresso = document.getElementById('barra-progresso');
+            const porcentagemStatus = document.getElementById('porcentagem-status');
 
-                let itensIdentificados = [];
+            if (statusLeitura) statusLeitura.classList.remove('hidden');
+            if (textoStatus) textoStatus.innerHTML = `<div class="spinner w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin inline-block mr-1"></div> Processando ${files.length} print(s) / OCR WhatsApp...`;
+            if (barraProgresso) barraProgresso.style.width = '20%';
+            if (porcentagemStatus) porcentagemStatus.innerText = '20%';
+
+            let novasImagens = [];
+            let todosItensExtraidos = [];
+
+            const lerComoDataURL = (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const pct = Math.round(((i + 1) / files.length) * 85);
+                if (barraProgresso) barraProgresso.style.width = `${pct}%`;
+                if (porcentagemStatus) porcentagemStatus.innerText = `${pct}%`;
+                if (textoStatus) textoStatus.innerHTML = `<div class="spinner w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin inline-block mr-1"></div> Analisando OCR do arquivo ${i + 1} de ${files.length} (${file.name})...`;
 
                 try {
+                    const dataUrl = await lerComoDataURL(file);
+                    novasImagens.push({ name: file.name || `Parte ${i + 1}`, url: dataUrl });
+
+                    let itensDestePrint = [];
                     if (window.Tesseract) {
-                        if (barraProgresso) barraProgresso.style.width = '65%';
-                        if (porcentagemStatus) porcentagemStatus.innerText = '65%';
-                        
                         const worker = await Tesseract.createWorker('por');
                         const ret = await worker.recognize(dataUrl);
                         await worker.terminate();
-                        
-                        const textoOCR = ret.data.text;
-                        itensIdentificados = extrairItensDeTextoOCR(textoOCR);
+                        itensDestePrint = extrairItensDeTextoOCR(ret.data.text);
+                    }
+
+                    if (itensDestePrint && itensDestePrint.length > 0) {
+                        todosItensExtraidos.push(...itensDestePrint);
                     }
                 } catch(errOCR) {
-                    console.warn("OCR fallback ativado:", errOCR);
+                    console.warn(`Erro no OCR do print ${file.name}:`, errOCR);
                 }
+            }
 
-                if (!itensIdentificados || itensIdentificados.length < 2) {
-                    itensIdentificados = JSON.parse(JSON.stringify(ITENS_PADRAO_WHATSAPP_GRUPO1));
+            // Fallback robusto: se o OCR de imagem não encontrou texto, injeta tabela padrão sem perda
+            if (todosItensExtraidos.length === 0) {
+                todosItensExtraidos = JSON.parse(JSON.stringify(ITENS_PADRAO_WHATSAPP_GRUPO1));
+            }
+
+            // Concatenação de itens: remove duplicidades exatas e preserva todas as partes
+            const mapaItens = new Map();
+            todosItensExtraidos.forEach(it => {
+                const chave = (it.catser ? `cat_${it.catser}_` : '') + it.desc.trim().toLowerCase();
+                if (!mapaItens.has(chave)) {
+                    mapaItens.set(chave, it);
                 }
+            });
+            const itensConsolidados = Array.from(mapaItens.values()).map((it, idx) => {
+                it.item = String(idx + 1);
+                return it;
+            });
 
-                if (barraProgresso) barraProgresso.style.width = '100%';
-                if (porcentagemStatus) porcentagemStatus.innerText = '100%';
-                if (statusLeitura) setTimeout(() => statusLeitura.classList.add('hidden'), 400);
+            if (barraProgresso) barraProgresso.style.width = '100%';
+            if (porcentagemStatus) porcentagemStatus.innerText = '100%';
+            if (statusLeitura) setTimeout(() => statusLeitura.classList.add('hidden'), 400);
 
-                abrirModalConferenciaPrint(dataUrl, itensIdentificados);
-                event.target.value = '';
-            };
-            reader.readAsDataURL(file);
+            const modal = document.getElementById('modal-conferencia-print');
+            const isModalAberto = modal && !modal.classList.contains('hidden');
+
+            if (isModalAberto && imagensConferenciaPrint.length > 0) {
+                imagensConferenciaPrint.push(...novasImagens);
+                tabelaConferenciaTemp.push(...itensConsolidados);
+                tabelaConferenciaTemp.forEach((it, idx) => it.item = String(idx + 1));
+                
+                trocarImagemPrintAtiva(imagensConferenciaPrint.length - 1);
+                renderizarGaleriaPrintsUI();
+                renderizarTabelaConferenciaPrint();
+                alert(`📸 Mais ${novasImagens.length} print(s) adicionados! Tabela unificada com ${tabelaConferenciaTemp.length} itens.`);
+            } else {
+                abrirModalConferenciaPrint(novasImagens, itensConsolidados);
+            }
+
+            if (event && event.target && event.target.value) {
+                try { event.target.value = ''; } catch(e) {}
+            }
         }
 
         function extrairItensDeTextoOCR(texto) {
@@ -2311,28 +2398,31 @@ na PONTA B e na PONTA C.
             matrizOCR = null;
             cache_ocr = null;
             tabelaConferenciaTemp = [];
+            imagensConferenciaPrint = [];
+            indiceImagemAtivaPrint = 0;
             itemCorrelacionadoHistorico = null;
-            abrirModalConferenciaPrint('', []);
+            abrirModalConferenciaPrint([], []);
         }
 
-        function abrirModalConferenciaPrint(imgSrc, listaItens) {
+        function abrirModalConferenciaPrint(imagens, listaItens) {
             const modal = document.getElementById('modal-conferencia-print');
-            const imgEl = document.getElementById('img-preview-print');
-            const placeholderEl = document.getElementById('placeholder-sem-print');
             
-            if (imgEl) {
-                if (imgSrc) {
-                    imgEl.src = imgSrc;
-                    imgEl.classList.remove('hidden');
-                    if (placeholderEl) placeholderEl.classList.add('hidden');
-                } else {
-                    imgEl.src = '';
-                    imgEl.classList.add('hidden');
-                    if (placeholderEl) placeholderEl.classList.remove('hidden');
-                }
+            if (typeof imagens === 'string') {
+                imagensConferenciaPrint = imagens ? [{ name: 'Print 1', url: imagens }] : [];
+            } else if (Array.isArray(imagens)) {
+                imagensConferenciaPrint = imagens.map((img, idx) => {
+                    if (typeof img === 'string') return { name: `Parte ${idx + 1}`, url: img };
+                    return img;
+                });
+            } else {
+                imagensConferenciaPrint = [];
             }
-            
+
             tabelaConferenciaTemp = (listaItens && Array.isArray(listaItens)) ? JSON.parse(JSON.stringify(listaItens)) : [];
+            indiceImagemAtivaPrint = 0;
+
+            renderizarGaleriaPrintsUI();
+            exibirImagemAtivaPrint();
             resetZoomImagemPrint();
             renderizarTabelaConferenciaPrint();
             
@@ -2341,6 +2431,58 @@ na PONTA B e na PONTA C.
             verificarCorrelacaoComHistorico(tabelaConferenciaTemp);
 
             if (modal) modal.classList.remove('hidden');
+        }
+
+        function renderizarGaleriaPrintsUI() {
+            const containerAbas = document.getElementById('container-abas-prints');
+            if (!containerAbas) return;
+
+            if (imagensConferenciaPrint.length <= 1) {
+                containerAbas.innerHTML = '';
+                containerAbas.classList.add('hidden');
+                return;
+            }
+
+            containerAbas.classList.remove('hidden');
+            containerAbas.innerHTML = '';
+
+            imagensConferenciaPrint.forEach((img, idx) => {
+                const btn = document.createElement('button');
+                const isAtiva = idx === indiceImagemAtivaPrint;
+                btn.type = 'button';
+                btn.className = `px-2.5 py-1 rounded text-xs font-bold transition flex items-center gap-1 whitespace-nowrap ${isAtiva ? 'bg-cyan-500 text-black shadow-md' : 'bg-slate-800 hover:bg-slate-700 text-gray-300'}`;
+                btn.innerHTML = `<span>📸</span> ${img.name || `Parte ${idx + 1}`}`;
+                btn.onclick = () => trocarImagemPrintAtiva(idx);
+                containerAbas.appendChild(btn);
+            });
+        }
+
+        function trocarImagemPrintAtiva(idx) {
+            if (idx >= 0 && idx < imagensConferenciaPrint.length) {
+                indiceImagemAtivaPrint = idx;
+                exibirImagemAtivaPrint();
+                renderizarGaleriaPrintsUI();
+            }
+        }
+
+        function exibirImagemAtivaPrint() {
+            const imgEl = document.getElementById('img-preview-print');
+            const placeholderEl = document.getElementById('placeholder-sem-print');
+            
+            if (imagensConferenciaPrint.length > 0 && imagensConferenciaPrint[indiceImagemAtivaPrint]) {
+                const imgAtiva = imagensConferenciaPrint[indiceImagemAtivaPrint];
+                if (imgEl) {
+                    imgEl.src = imgAtiva.url;
+                    imgEl.classList.remove('hidden');
+                }
+                if (placeholderEl) placeholderEl.classList.add('hidden');
+            } else {
+                if (imgEl) {
+                    imgEl.src = '';
+                    imgEl.classList.add('hidden');
+                }
+                if (placeholderEl) placeholderEl.classList.remove('hidden');
+            }
         }
 
         function popularSelectProcessosPrint() {
