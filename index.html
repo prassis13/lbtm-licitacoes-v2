@@ -88,6 +88,26 @@ na PONTA B e na PONTA C.
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
+
+        /* ELIMINAÇÃO TOTAL DE ÍCONES NO CABEÇALHO DA TABELA A4 (PÁGINA 2 E TELA) */
+        #a4-proposta table th i,
+        #a4-proposta table th svg,
+        .a4-table th::before,
+        .a4-table th::after,
+        #a4-proposta table th:first-child i,
+        #a4-proposta table th:first-child svg,
+        #aba-proposta table th i,
+        #aba-proposta table th svg,
+        #folha-proposta-a4 table th i,
+        #folha-proposta-a4 table th svg,
+        #folha-proposta-a4 table th::before,
+        #folha-proposta-a4 table th::after,
+        #folha-proposta-a4 table th:first-child i,
+        #folha-proposta-a4 table th:first-child svg {
+            display: none !important;
+            content: none !important;
+            background: none !important;
+        }
         
         /* REGRAS DE IMPRESSÃO A4 COM TIPOGRAFIA AMPLIADA (12PX) E ENQUADRAMENTO PERFEITO */
         @media print {
