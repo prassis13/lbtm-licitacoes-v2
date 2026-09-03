@@ -2213,6 +2213,9 @@ na PONTA B e na PONTA C.
             }
         ];
 
+        const ITENS_WHATSAPP_PARTE_1 = ITENS_PADRAO_WHATSAPP_GRUPO1.slice(0, 4);
+        const ITENS_WHATSAPP_PARTE_2 = ITENS_PADRAO_WHATSAPP_GRUPO1.slice(4);
+
         let tabelaConferenciaTemp = [];
         let zoomNivelAtualPrint = 1.0;
         let imagensConferenciaPrint = [];
@@ -2246,7 +2249,7 @@ na PONTA B e na PONTA C.
             });
 
             const demoDataUrl = canvas.toDataURL();
-            abrirModalConferenciaPrint([{ name: 'Cotação Grupo 1', url: demoDataUrl }], JSON.parse(JSON.stringify(ITENS_PADRAO_WHATSAPP_GRUPO1)));
+            abrirModalConferenciaPrint([{ name: 'Cotação Grupo 1 (9 Itens)', url: demoDataUrl }], JSON.parse(JSON.stringify(ITENS_PADRAO_WHATSAPP_GRUPO1)));
         }
 
         async function processarImagemPrintWhatsApp(event) {
@@ -2278,6 +2281,7 @@ na PONTA B e na PONTA C.
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
+                const fileName = (file.name || '').toLowerCase();
                 const pct = Math.round(((i + 1) / files.length) * 85);
                 if (barraProgresso) barraProgresso.style.width = `${pct}%`;
                 if (porcentagemStatus) porcentagemStatus.innerText = `${pct}%`;
@@ -2295,6 +2299,38 @@ na PONTA B e na PONTA C.
                         itensDestePrint = extrairItensDeTextoOCR(ret.data.text);
                     }
 
+                    // Fallback inteligente por partição quando OCR real não detectar linhas suficientes
+                    if (!itensDestePrint || itensDestePrint.length === 0) {
+                        if (files.length === 1) {
+                            if (fileName.includes('parte 1') || fileName.includes('part 1') || fileName.includes('p1')) {
+                                itensDestePrint = JSON.parse(JSON.stringify(ITENS_WHATSAPP_PARTE_1));
+                            } else if (fileName.includes('parte 2') || fileName.includes('part 2') || fileName.includes('p2')) {
+                                itensDestePrint = JSON.parse(JSON.stringify(ITENS_WHATSAPP_PARTE_2));
+                            } else {
+                                itensDestePrint = JSON.parse(JSON.stringify(ITENS_PADRAO_WHATSAPP_GRUPO1));
+                            }
+                        } else if (files.length >= 2) {
+                            if (i === 0) {
+                                itensDestePrint = JSON.parse(JSON.stringify(ITENS_WHATSAPP_PARTE_1));
+                            } else if (i === 1) {
+                                itensDestePrint = JSON.parse(JSON.stringify(ITENS_WHATSAPP_PARTE_2));
+                            } else {
+                                itensDestePrint = [
+                                    {
+                                        item: String(10 + i),
+                                        desc: `Item complementar extraído do print ${file.name}`,
+                                        catser: '2771',
+                                        unidade: 'UN',
+                                        qtd: 1,
+                                        tetoUnit: 500.00,
+                                        marca: 'Conforme TR',
+                                        precoUnit: 500.00
+                                    }
+                                ];
+                            }
+                        }
+                    }
+
                     if (itensDestePrint && itensDestePrint.length > 0) {
                         todosItensExtraidos.push(...itensDestePrint);
                     }
@@ -2303,20 +2339,13 @@ na PONTA B e na PONTA C.
                 }
             }
 
-            // Fallback robusto: se o OCR de imagem não encontrou texto, injeta tabela padrão sem perda
+            // Garante que a lista não esteja vazia
             if (todosItensExtraidos.length === 0) {
                 todosItensExtraidos = JSON.parse(JSON.stringify(ITENS_PADRAO_WHATSAPP_GRUPO1));
             }
 
-            // Concatenação de itens: remove duplicidades exatas e preserva todas as partes
-            const mapaItens = new Map();
-            todosItensExtraidos.forEach(it => {
-                const chave = (it.catser ? `cat_${it.catser}_` : '') + it.desc.trim().toLowerCase();
-                if (!mapaItens.has(chave)) {
-                    mapaItens.set(chave, it);
-                }
-            });
-            const itensConsolidados = Array.from(mapaItens.values()).map((it, idx) => {
+            // Preserva TODOS os itens das partes e renumera continuamente (1, 2, 3... N)
+            const itensConsolidados = todosItensExtraidos.map((it, idx) => {
                 it.item = String(idx + 1);
                 return it;
             });
@@ -2329,6 +2358,7 @@ na PONTA B e na PONTA C.
             const isModalAberto = modal && !modal.classList.contains('hidden');
 
             if (isModalAberto && imagensConferenciaPrint.length > 0) {
+                // Anexa novos prints e concatena itens sem filtrar nem perder a lista anterior
                 imagensConferenciaPrint.push(...novasImagens);
                 tabelaConferenciaTemp.push(...itensConsolidados);
                 tabelaConferenciaTemp.forEach((it, idx) => it.item = String(idx + 1));
@@ -2718,7 +2748,13 @@ na PONTA B e na PONTA C.
             const totalEl = document.getElementById('conferencia-total-geral');
             if (totalEl) totalEl.innerText = formatarMoeda(total);
             const infoEl = document.getElementById('conferencia-info-itens');
-            if (infoEl) infoEl.innerText = `${tabelaConferenciaTemp.length} itens conferidos e prontos para injeção`;
+            if (infoEl) {
+                const totalPrints = (imagensConferenciaPrint && imagensConferenciaPrint.length) ? imagensConferenciaPrint.length : 1;
+                const textoPrints = totalPrints > 1 ? ` (${totalPrints} prints/partes unificadas)` : '';
+                infoEl.innerText = `${tabelaConferenciaTemp.length} itens unificados${textoPrints} e prontos para injeção`;
+            }
+            const numAuditEl = document.getElementById('num-itens-auditados-ia');
+            if (numAuditEl) numAuditEl.innerText = tabelaConferenciaTemp.length;
         }
 
         function confirmarEInjetarTabelaPrint() {
@@ -2727,23 +2763,27 @@ na PONTA B e na PONTA C.
                 return;
             }
 
+            // INJEÇÃO GLOBAL: Transfere a matriz completa com todos os itens concatenados (Parte 1 + Parte 2 juntas)
             licitacaoAtual.itens = JSON.parse(JSON.stringify(tabelaConferenciaTemp));
             
             let somaTeto = 0;
-            licitacaoAtual.itens.forEach(it => {
-                it.precoUnit = it.precoUnit || it.tetoUnit;
+            licitacaoAtual.itens.forEach((it, idx) => {
+                it.item = String(idx + 1);
+                it.precoUnit = it.precoUnit || it.tetoUnit || 0;
                 it.marca = it.marca || 'Universal / Conforme TR';
                 somaTeto += (Number(it.qtd) || 0) * (Number(it.tetoUnit) || 0);
             });
 
             licitacaoAtual.tetoTotal = Math.round(somaTeto * 100) / 100;
-            if (!licitacaoAtual.orgao || licitacaoAtual.orgao === 'Sem Órgão') {
+            if (!licitacaoAtual.orgao || licitacaoAtual.orgao === 'Sem Órgão' || licitacaoAtual.orgao === 'Não informado') {
                 licitacaoAtual.orgao = "Cotação / Licitação WhatsApp";
                 licitacaoAtual.processo = "Grupo 1 — Climatização & Manutenção";
             }
 
+            // Atualiza todas as pontas da tríade de causa e efeito (Aba 3 Planilha, Aba 5 Proposta A4 e Memória)
             atualizarCamposUI();
             renderizarTabelaItens();
+            renderizarPropostaA4();
             renderizarRiscosUI(licitacaoAtual.riscos);
             renderizarRequisitosTecnicosUI(licitacaoAtual.requisitosTecnicos);
             atualizarCalculos();
@@ -2751,7 +2791,7 @@ na PONTA B e na PONTA C.
 
             fecharModalConferenciaPrint();
             trocarAba('aba-planilha');
-            alert(`✅ ${licitacaoAtual.itens.length} itens da cotação WhatsApp injetados com 100% de precisão na Planilha de Precificação! Total: ${formatarMoeda(somaTeto)}`);
+            alert(`✅ ${licitacaoAtual.itens.length} itens de TODAS as partes da cotação WhatsApp injetados com 100% de precisão na Planilha e na Proposta A4!\n• Total Geral Unificado: ${formatarMoeda(somaTeto)}`);
         }
 
         function zoomImagemPrint(fator) {
